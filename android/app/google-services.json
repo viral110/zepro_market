@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "38162620755",
+    "firebase_url": "https://jalaram-811be-default-rtdb.firebaseio.com",
+    "project_id": "jalaram-811be",
+    "storage_bucket": "jalaram-811be.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:38162620755:android:01e7894f938a1c3a87c1a6",
+        "android_client_info": {
+          "package_name": "com.example.jalaram"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "38162620755-57hi74dmooago4uvv9fciic7dpibeh5e.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.jalaram",
+            "certificate_hash": "729d482e205a9f31d656cbd3f3c8b183fbcfccef"
+          }
+        },
+        {
+          "client_id": "38162620755-j0rfbug7o2pnislmo0vf7pldnkvdm4k7.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2btbwyFcjJnwjVUJdWcf5_nTbC-RWnNw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "38162620755-j0rfbug7o2pnislmo0vf7pldnkvdm4k7.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
