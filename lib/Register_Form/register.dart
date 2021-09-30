@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:jalaram/login_details/loginwithmobile.dart';
 
 class Register extends StatefulWidget {
   @override
@@ -50,7 +51,9 @@ class _RegisterState extends State<Register> {
                   children: [
                     IconButton(
                         icon: Icon(Icons.arrow_back),
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.pop(context);
+                        },
                         color: Color.fromRGBO(49, 60, 51, 1)),
                     SizedBox(
                       width: 60,
@@ -230,7 +233,7 @@ class _RegisterState extends State<Register> {
                                val = value;
                              });
                             }),
-                        Text("Other",style: GoogleFonts.aBeeZee(),)
+                        Text("Other City",style: GoogleFonts.aBeeZee(),)
                       ],
                     ),
                   ],

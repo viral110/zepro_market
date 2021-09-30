@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:jalaram/Home/bottomnavbar.dart';
 import 'package:jalaram/Home/homepage.dart';
 import 'package:jalaram/Home/imageslider.dart';
 import 'package:jalaram/Register_Form/register.dart';
@@ -28,7 +29,7 @@ class MyApp extends StatelessWidget {
       child: MaterialApp(
         title: 'Flutter Demo',
 
-        home: LoginWithMobile(),
+        home: BottomNavBar(),
       ),
     );
   }
