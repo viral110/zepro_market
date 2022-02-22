@@ -39,12 +39,21 @@ dependencies:
   flutter_svg:
   flutter_search_bar:
   animated_bottom_navigation_bar:
-
+  favorite_button:
+  video_player: ^2.2.7
   image_picker:
   google_fonts: ^2.1.0
   carousel_pro: ^1.0.0
   curved_navigation_bar:
+  carousel_slider: ^4.0.0
+  flutter_html: ^2.2.1
   http:
+  share: ^2.0.4
+  path_provider:
+  file_picker: ^4.2.7
+  flutter_secure_storage: ^5.0.2
+  fluttertoast: ^8.0.8
+  url_launcher: ^6.0.18
 
 
 dev_dependencies:
@@ -66,6 +75,7 @@ flutter:
   assets:
     - assets/
     - assets/product_image/
+    - assets/new/
 
   #   - images/a_dot_ham.jpeg
 
@@ -80,6 +90,10 @@ flutter:
   # "family" key with the font family name, and a "fonts" key with a
   # list giving the asset and other descriptors for the font. For
   # example:
+  fonts:
+    - family: Apple
+      fonts:
+        - asset: assets/fonts/FontsFree-Net-Apple-SD-Gothic-Neo-Bold.ttf
   # fonts:
   #   - family: Schyler
   #     fonts:

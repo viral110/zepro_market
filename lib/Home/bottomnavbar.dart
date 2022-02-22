@@ -3,7 +3,12 @@ import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:jalaram/Connect_API/api.dart';
 import 'package:jalaram/Home/homepage.dart';
+import 'package:jalaram/Menu_Drawer/profile.dart';
+import 'package:jalaram/WishList/wishlist.dart';
+import 'package:jalaram/product_catalogue/products.dart';
 
 class BottomNavBar extends StatefulWidget {
   @override
@@ -12,7 +17,6 @@ class BottomNavBar extends StatefulWidget {
 
 class _BottomNavBarState extends State<BottomNavBar>
     with SingleTickerProviderStateMixin {
-  int _page = 0;
   GlobalKey<CurvedNavigationBarState> _bottomNavigationKey = GlobalKey();
   AnimationController _animationController;
   Animation<double> animation;
@@ -20,19 +24,26 @@ class _BottomNavBarState extends State<BottomNavBar>
 
   final tabsView = <Widget>[
     HomePage(),
+    WishList(),
+    Products(),
     Container(
-      color: Colors.lightBlue,
+      color: Colors.green,
     ),
-    Container(
-      color: Colors.lightGreen,
-    ),
-    Container(
-      color: Colors.redAccent,
-    ),
-    Container(
-      color: Colors.yellowAccent,
-    ),
+    Profile(),
   ];
+
+  int _currentIndex = 0;
+  GlobalKey<ScaffoldState> drawerKey = GlobalKey<ScaffoldState>();
+
+  void _updateIndex(int value) {
+    value == 4
+        ? drawerKey.currentState.openEndDrawer()
+        : setState(() {
+            _currentIndex = value;
+            ApiServices().microProducts(context);
+
+          });
+  }
 
   // @override
   // void initState() {
@@ -69,43 +80,121 @@ class _BottomNavBarState extends State<BottomNavBar>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: tabsView[_page],
-      bottomNavigationBar: CurvedNavigationBar(
-
-        key: _bottomNavigationKey,
-        index: 0,
-        height: 60.0,
-        items: <Widget>[
-          Icon(Icons.home, size: 30),
-          Image.asset(
-            "assets/wholesaler.png",
-            height: 37,
-            width: 37,
-            color: Colors.deepPurple,
+      key: drawerKey,
+      endDrawer: Profile(),
+      body: tabsView[_currentIndex],
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          border: Border(top: BorderSide(color: Colors.grey[300])),
+        ),
+        height: MediaQuery.of(context).size.height / 10,
+        child: BottomNavigationBar(
+          elevation: 20,
+          type: BottomNavigationBarType.fixed,
+          selectedItemColor: Color.fromRGBO(255, 78, 91, 1),
+          selectedFontSize: 12,
+          selectedLabelStyle: GoogleFonts.aBeeZee(
+            letterSpacing: 1,
           ),
-          Image.asset(
-            "assets/cubes.png",
-            height: 30,
-            width: 30,
-          ),
-          Image.asset(
-            "assets/shopping-cart.png",
-            height: 30,
-            width: 30,
-          ),
-          Icon(Icons.perm_identity, size: 30),
-        ],
-        color: Colors.white,
-        buttonBackgroundColor: Colors.white,
-        backgroundColor: Colors.white,
-        animationCurve: Curves.easeInOut,
-        animationDuration: Duration(milliseconds: 400),
-        onTap: (index) {
-          setState(() {
-            _page = index;
-          });
-        },
-        letIndexChange: (index) => true,
+          backgroundColor: Colors.white,
+          unselectedItemColor: Colors.black,
+          currentIndex: _currentIndex,
+          onTap: _updateIndex,
+          items: [
+            BottomNavigationBarItem(
+              icon: _currentIndex == 0
+                  ? Padding(
+                      padding: const EdgeInsets.only(bottom: 7),
+                      child: Image.asset(
+                        'assets/new/home.png',
+                        height: 23,
+                        width: 23,
+                      ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.only(bottom: 7),
+                      child: Image.asset(
+                        "assets/new/home3.png",
+                        height: 23,
+                        width: 23,
+                        color: Colors.black,
+                      ),
+                    ),
+              label: "Home",
+            ),
+            BottomNavigationBarItem(
+              icon: _currentIndex == 1
+                  ? Padding(
+                      padding: const EdgeInsets.only(bottom: 7),
+                      child: Image.asset(
+                        "assets/new/Wishlist.png",
+                        height: 23,
+                        width: 23,
+                      ),
+                    )
+                  : Padding(
+                      padding: const EdgeInsets.only(bottom: 7),
+                      child: Image.asset(
+                        "assets/new/Wishlist2.png",
+                        height: 23,
+                        width: 23,
+                        color: Colors.black,
+                      ),
+                    ),
+              label: "Wishlist",
+            ),
+            BottomNavigationBarItem(
+                icon: _currentIndex == 2
+                    ? Image.asset(
+                        "assets/new/Product2.png",
+                        height: 35,
+                        width: 35,
+                        fit: BoxFit.fill,
+                      )
+                    : Image.asset(
+                        "assets/new/Product.png",
+                        height: 32,
+                        width: 32,
+                        fit: BoxFit.fill,
+                        color: Colors.black,
+                      ),
+                label: "Products"),
+            BottomNavigationBarItem(
+                icon: _currentIndex == 3
+                    ? Padding(
+                        padding: const EdgeInsets.only(bottom: 7),
+                        child: Image.asset(
+                          "assets/new/cart4.png",
+                          height: 27,
+                          width: 27,
+                        ),
+                      )
+                    : Image.asset(
+                        "assets/new/cart5.png",
+                        height: 23,
+                        width: 23,
+                        color: Colors.black,
+                      ),
+                label: "Cart"),
+            BottomNavigationBarItem(
+                icon: _currentIndex == 4
+                    ? Image.asset(
+                        "assets/new/menu.png",
+                        height: 27,
+                        width: 27,
+                        color: Color.fromRGBO(255, 78, 91, 1),
+                        fit: BoxFit.fill,
+                      )
+                    : Image.asset(
+                        "assets/new/menu.png",
+                        height: 27,
+                        width: 27,
+                        color: Colors.black,
+                        fit: BoxFit.fitHeight,
+                      ),
+                label: "More"),
+          ],
+        ),
       ),
       // floatingActionButton: ScaleTransition(
       //   scale: animation,

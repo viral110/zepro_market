@@ -1,10 +1,13 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:http/http.dart';
 import 'package:jalaram/Connect_API/api.dart';
+import 'package:jalaram/Home/bottomnavbar.dart';
 import 'package:jalaram/Register_Form/register.dart';
-import 'package:jalaram/bloc_pattern/blocpattern.dart';
+
 import 'package:provider/provider.dart';
 
 import 'package:sms_autofill/sms_autofill.dart';
@@ -47,6 +50,7 @@ class _LoginWithMobileState extends State<LoginWithMobile> {
       setState(() {
         isLogged = true;
         uid = FirebaseAuth.instance.currentUser.uid;
+        sendAndRegister();
       });
     } else {
       print("Something is error");
@@ -99,7 +103,6 @@ class _LoginWithMobileState extends State<LoginWithMobile> {
 
   @override
   Widget build(BuildContext context) {
-    final bloc = Provider.of<LoginWithAuth>(context, listen: false);
     return Scaffold(
       body: SafeArea(
         child: Form(
@@ -110,7 +113,7 @@ class _LoginWithMobileState extends State<LoginWithMobile> {
               if (snapshot.connectionState == ConnectionState.waiting)
                 return CircularProgressIndicator();
               return isLogged
-                  ? sendAndRegister
+                  ? BottomNavBar()
                   : otpSent
                       ? SingleChildScrollView(
                           child: Padding(
@@ -177,12 +180,6 @@ class _LoginWithMobileState extends State<LoginWithMobile> {
                                         fontSize: 20, color: Colors.black),
                                   ),
                                   codeLength: 6,
-
-                                  // onCodeChanged: (code) {
-                                  //   print(code);
-                                  //
-                                  //   // FocusScope.of(context).requestFocus(FocusNode());
-                                  // },
                                 ),
                                 SizedBox(
                                   height: 25,
@@ -280,28 +277,22 @@ class _LoginWithMobileState extends State<LoginWithMobile> {
                                 SizedBox(
                                   height: 30,
                                 ),
-                                StreamBuilder(
-                                    stream: bloc.loginNumber,
-                                    builder: (context, snapshot) {
-                                      return TextFormField(
-                                        keyboardType: TextInputType.number,
-                                        controller: _phoneNumber,
-                                        decoration: InputDecoration(
-                                          labelText: "Mobile",
-                                          contentPadding: EdgeInsets.all(12),
-                                          hintText: "Phone number",
-                                          prefix: Text(
-                                            "+91 | ",
-                                            style: TextStyle(
-                                                color: Colors.black87),
-                                          ),
-                                          border: OutlineInputBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(5),
-                                          ),
-                                        ),
-                                      );
-                                    }),
+                                TextFormField(
+                                  keyboardType: TextInputType.number,
+                                  controller: _phoneNumber,
+                                  decoration: InputDecoration(
+                                    labelText: "Mobile",
+                                    contentPadding: EdgeInsets.all(12),
+                                    hintText: "Phone number",
+                                    prefix: Text(
+                                      "+91 | ",
+                                      style: TextStyle(color: Colors.black87),
+                                    ),
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(5),
+                                    ),
+                                  ),
+                                ),
                                 SizedBox(
                                   height: 55,
                                 ),
@@ -311,8 +302,9 @@ class _LoginWithMobileState extends State<LoginWithMobile> {
                                       borderRadius: BorderRadius.circular(5),
                                     ),
                                     onPressed: () async {
-                                      _sendOtp();
-
+                                      setState(() {
+                                        sendAndRegister();
+                                      });
                                     },
                                     child: Text("GENERATE OTP"),
                                     color: Color.fromRGBO(255, 99, 71, 0.9),
@@ -330,16 +322,18 @@ class _LoginWithMobileState extends State<LoginWithMobile> {
       ),
     );
   }
-  void sendAndRegister () async {
-    var userId;
-    if(_globalKey.currentState.validate()){
 
+  void sendAndRegister() async {
+    if (_globalKey.currentState.validate()) {
       var mobileNum = _phoneNumber.text;
-      var result = await loginAuth(userId, mobileNum);
-      print(result.toString());
 
+      Response result =
+          await ApiServices().loginAuth(mobileNum, context);
+      Fluttertoast.showToast(msg: "LogIn Successfully");
+      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => BottomNavBar(),));
+    } else {
+      Fluttertoast.showToast(msg: "Enter valid Data");
     }
-    Navigator.push(context, MaterialPageRoute(builder: (context) => Register(),));
   }
 }
 
