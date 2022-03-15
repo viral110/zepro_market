@@ -8,6 +8,8 @@ import 'package:jalaram/Connect_API/api.dart';
 import 'package:jalaram/Model/get_wishlist_products.dart';
 import 'package:jalaram/product_catalogue/products.dart';
 
+import '../product_catalogue/productdetails.dart';
+
 class WishList extends StatefulWidget {
   const WishList({Key key}) : super(key: key);
 
@@ -17,7 +19,13 @@ class WishList extends StatefulWidget {
 
 class _WishListState extends State<WishList> {
   GetWishListProducts gwp;
+
   bool isGetFavourite = false;
+  bool addButtonPressed = false;
+
+  RegExp regex = RegExp(r'([.]*0)(?!.*\d)');
+
+  List<StoreNumberCart> counterWishList = [];
 
   @override
   void initState() {
@@ -31,6 +39,9 @@ class _WishListState extends State<WishList> {
       var decoded = jsonDecode(response.body);
       if (response.statusCode == 200) {
         gwp = GetWishListProducts.fromJson(decoded);
+        counterWishList = List.generate(gwp.response.length, (index) {
+          return StoreNumberCart(number: gwp.response[index].inCart,isVisible: gwp.response[index].cartStatus);
+        });
         Fluttertoast.showToast(msg: "wishlist products");
         setState(() {
           isGetFavourite = true;
@@ -114,7 +125,7 @@ class _WishListState extends State<WishList> {
                                                     .height /
                                                 9,
                                             child: Image.network(
-                                              "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Image_created_with_a_mobile_phone.png/1200px-Image_created_with_a_mobile_phone.png",
+                                              "${gwp.urls.image}/${gwp.response[index].banner.media}",
                                             ),
                                             decoration: BoxDecoration(
                                               border: Border.all(
@@ -151,9 +162,8 @@ class _WishListState extends State<WishList> {
                                                             30
                                                         ? Text(
                                                             "${gwp.response[index].title.toUpperCase()}...",
-                                                            style: TextStyle(
-                                                                fontFamily:
-                                                                    'Apple',
+                                                            style: GoogleFonts.dmSans(
+
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .bold,
@@ -163,9 +173,8 @@ class _WishListState extends State<WishList> {
                                                           )
                                                         : Text(
                                                             "${gwp.response[index].title.toUpperCase()}",
-                                                            style: TextStyle(
-                                                                fontFamily:
-                                                                    'Apple',
+                                                            style: GoogleFonts.dmSans(
+
                                                                 fontWeight:
                                                                     FontWeight
                                                                         .bold,
@@ -176,20 +185,147 @@ class _WishListState extends State<WishList> {
                                                     SizedBox(
                                                       height: 5,
                                                     ),
-                                                    Text(
-                                                      "${gwp.response[index].category}",
-                                                      style: TextStyle(
+                                                    Padding(
+                                                      padding:  EdgeInsets.only(right: 5),
+                                                      child: Row(
+                                                        children: [
+                                                          Text(
+                                                            "${gwp.response[index].category}",
+                                                            style: GoogleFonts.dmSans(
 
-                                                          // fontWeight: FontWeight.bold,
-                                                          fontSize: 12,
-                                                          color: Colors.grey),
+                                                                // fontWeight: FontWeight.bold,
+                                                                fontSize: 12,
+                                                                color: Colors.grey),
+                                                          ),
+                                                          Spacer(),
+                                                          counterWishList[index].isVisible
+                                                          ? Container(
+                                                            child: Row(
+                                                              children: [
+                                                                GestureDetector(
+                                                                    onTap: () async {
+                                                                      await ApiServices().decrementProducts(gwp.response[index].productId, 1, context);
+                                                                      setState(() {
+
+                                                                        ApiServices().getWishListProducts(context);
+
+                                                                      });
+                                                                      if(counterWishList[index].number < 2){
+                                                                        counterWishList[index].isVisible = !counterWishList[index].isVisible;
+
+                                                                      }
+                                                                      else{
+                                                                        counterWishList[index].number--;
+                                                                      }
+                                                                      debugPrint(
+                                                                          "Decrement che : ${counterWishList[index].number}");
+                                                                      // Fluttertoast.showToast(msg: "Product Decrement : ${dataIncrement[index].counter--}");
+                                                                    },
+                                                                    child: Icon(
+                                                                      Icons.remove,
+                                                                      size: 20,
+                                                                    )),
+                                                                SizedBox(
+                                                                  width: 5,
+                                                                ),
+
+                                                                Text(
+                                                                  "${counterWishList[index].number.toString()}",
+                                                                  style: TextStyle(
+                                                                      fontWeight:
+                                                                      FontWeight
+                                                                          .bold),
+                                                                ),
+                                                                SizedBox(
+                                                                  width: 5,
+                                                                ),
+                                                                GestureDetector(
+                                                                    onTap: () {
+                                                                      setState(() {
+                                                                        counterWishList[
+                                                                        index]
+                                                                            .number++;
+                                                                        ApiServices().incrementProducts(
+                                                                            gwp
+                                                                                .response[
+                                                                            index]
+                                                                                .productId,
+                                                                            counterWishList[
+                                                                            index]
+                                                                                .number);
+                                                                      });
+                                                                      ApiServices().getWishListProducts(context);
+                                                                      debugPrint(
+                                                                          "Increment che : ${counterWishList[index].number}");
+                                                                    },
+                                                                    child: Icon(
+                                                                      Icons.add,
+                                                                      size: 20,
+                                                                    )),
+                                                                SizedBox(
+                                                                  width: 3,
+                                                                ),
+                                                              ],
+                                                              mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
+                                                            ),
+                                                            decoration: BoxDecoration(
+                                                              borderRadius:
+                                                              BorderRadius.circular(
+                                                                  2),
+                                                              border: Border.all(
+                                                                  color: Color.fromRGBO(
+                                                                      22, 2, 105, 1)),
+                                                            ),
+                                                            width: 80,
+                                                          )
+                                                          :Container(
+                                                            width: 80,
+
+                                                            decoration: BoxDecoration(
+                                                              borderRadius:
+                                                              BorderRadius.circular(
+                                                                  2),
+                                                              border: Border.all(
+                                                                  color: Color.fromRGBO(
+                                                                      22, 2, 105, 1)),
+                                                            ),
+                                                            child: InkWell(
+
+                                                              child: Text("ADD",style: TextStyle(
+                                                                  fontWeight:
+                                                                  FontWeight
+                                                                      .bold),),
+                                                              onTap: (){
+                                                                setState(() {
+                                                                  counterWishList[index].number = 1;
+                                                                  ApiServices().incrementProducts(
+                                                                      gwp
+                                                                          .response[
+                                                                      index]
+                                                                          .productId,
+                                                                      counterWishList[
+                                                                      index]
+                                                                          .number);
+                                                                  addButtonPressed = true;
+                                                                  ApiServices().getWishListProducts(context);
+                                                                  counterWishList[index].isVisible = !counterWishList[index].isVisible;
+                                                                });
+                                                              },
+                                                            ),
+                                                            height: 22,
+                                                            alignment: Alignment.center,
+                                                          ),
+                                                        ],
+                                                      ),
                                                     ),
                                                     SizedBox(
                                                       height: 5,
                                                     ),
                                                     Text(
-                                                      "${gwp.response[index].cartoon.toString()}/Cartoon | ${gwp.response[index].stock.toString()} Stock",
-                                                      style: TextStyle(
+                                                      "${gwp.response[index].cartoon.toString().replaceAll(regex, "")}/Cartoon | ${gwp.response[index].stock.toString()} Stock",
+                                                      style: GoogleFonts.dmSans(
                                                         fontSize: 12,
                                                       ),
                                                     ),
@@ -206,8 +342,8 @@ class _WishListState extends State<WishList> {
                                                               height: 10,
                                                             ),
                                                             Text(
-                                                              "${gwp.response[index].price.toString()}",
-                                                              style: TextStyle(
+                                                              "${gwp.response[index].price.toString().replaceAll(regex, "")}",
+                                                              style: GoogleFonts.dmSans(
                                                                   fontWeight:
                                                                       FontWeight
                                                                           .bold,
@@ -233,8 +369,8 @@ class _WishListState extends State<WishList> {
                                                                   Colors.grey,
                                                             ),
                                                             Text(
-                                                              "${gwp.response[index].mrp.toString()}",
-                                                              style: GoogleFonts.nunitoSans(
+                                                              "${gwp.response[index].mrp.toString().replaceAll(regex, "")}",
+                                                              style: GoogleFonts.dmSans(
                                                                   decoration:
                                                                       TextDecoration
                                                                           .lineThrough,
@@ -250,7 +386,7 @@ class _WishListState extends State<WishList> {
                                                         Text(
                                                           "${gwp.response[index].discountPercentage.toString()}% OFF",
                                                           style: GoogleFonts
-                                                              .nunitoSans(
+                                                              .dmSans(
                                                                   color: Colors
                                                                           .green[
                                                                       700],
@@ -264,13 +400,7 @@ class _WishListState extends State<WishList> {
                                                     SizedBox(
                                                       height: 5,
                                                     ),
-                                                    // Text(
-                                                    //   "HSN:45682902 - 12%",
-                                                    //   style: GoogleFonts.nunitoSans(
-                                                    //     color: Colors.grey.withOpacity(0.7),
-                                                    //     fontSize: 13,
-                                                    //   ),
-                                                    // ),
+
                                                   ],
                                                 ),
                                                 Positioned(
@@ -307,7 +437,17 @@ class _WishListState extends State<WishList> {
                                                 .size
                                                 .width,
                                           ),
-                                          onTap: () {},
+                                          onTap: ()  {
+                                            String productId = gwp.response[index].productId;
+                                            Navigator.of(context)
+                                                .push(MaterialPageRoute(
+                                              builder: (context) => ProductDetails(
+                                                productId:
+                                                gwp.response[index].productId,
+                                              ),
+                                            ));
+                                            ApiServices().microProductDetails(productId, context);
+                                          },
                                         ),
                                         flex: 1,
                                         fit: FlexFit.loose,
@@ -375,9 +515,9 @@ class _WishListState extends State<WishList> {
                                     },
                                     child: Text(
                                       "View Product",
-                                      style: TextStyle(
+                                      style: GoogleFonts.dmSans(
                                           color: Colors.white,
-                                          letterSpacing: 1,
+                                          letterSpacing: 1.5,
                                           fontWeight: FontWeight.bold),
                                     ),
                                   )),
@@ -390,4 +530,10 @@ class _WishListState extends State<WishList> {
       ),
     );
   }
+}
+
+class StoreNumberCart{
+  int number;
+  bool isVisible;
+  StoreNumberCart({this.number,this.isVisible});
 }

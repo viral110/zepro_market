@@ -23,6 +23,8 @@ class _LoginWithMobileState extends State<LoginWithMobile> {
 
   Future<FirebaseApp> _firebaseApp;
 
+
+
   TextEditingController _phoneNumber = TextEditingController();
   TextEditingController _otp = TextEditingController();
 
@@ -195,7 +197,7 @@ class _LoginWithMobileState extends State<LoginWithMobile> {
                                     ),
                                     FlatButton(
                                         onPressed: () {
-                                          _sendOtp();
+                                          // _sendOtp();
                                         },
                                         child: Text("Resend",
                                             style: GoogleFonts.aBeeZee(
@@ -330,7 +332,7 @@ class _LoginWithMobileState extends State<LoginWithMobile> {
       Response result =
           await ApiServices().loginAuth(mobileNum, context);
       Fluttertoast.showToast(msg: "LogIn Successfully");
-      Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => BottomNavBar(),));
+      Navigator.push(context, MaterialPageRoute(builder: (context) => BottomNavBar(),));
     } else {
       Fluttertoast.showToast(msg: "Enter valid Data");
     }

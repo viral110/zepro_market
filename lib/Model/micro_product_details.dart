@@ -28,13 +28,15 @@ class MicroProductDetails {
 
 class ResponseMicroDetails {
   List<Banners> banners;
+  bool cartStatus;
   int cartoon;
   String category;
   String description;
   String dimensions;
   double discountPercentage;
   List<GalleryOfProduct> gallery;
-  bool inCart;
+  String hsn;
+  int inCart;
   bool inFavorits;
   double mrp;
   double price;
@@ -47,12 +49,14 @@ class ResponseMicroDetails {
 
   ResponseMicroDetails(
       {this.banners,
+      this.cartStatus,
       this.cartoon,
       this.category,
       this.description,
       this.dimensions,
       this.discountPercentage,
       this.gallery,
+      this.hsn,
       this.inCart,
       this.inFavorits,
       this.mrp,
@@ -71,6 +75,7 @@ class ResponseMicroDetails {
         banners.add(new Banners.fromJson(v));
       });
     }
+    cartStatus = json['cart_status'];
     cartoon = json['cartoon'];
     category = json['category'];
     description = json['description'];
@@ -82,6 +87,7 @@ class ResponseMicroDetails {
         gallery.add(new GalleryOfProduct.fromJson(v));
       });
     }
+    hsn = json['hsn'];
     inCart = json['in_cart'];
     inFavorits = json['in_favorits'];
     mrp = json['mrp'];
@@ -99,6 +105,7 @@ class ResponseMicroDetails {
     if (this.banners != null) {
       data['banners'] = this.banners.map((v) => v.toJson()).toList();
     }
+    data['cart_status'] = this.cartStatus;
     data['cartoon'] = this.cartoon;
     data['category'] = this.category;
     data['description'] = this.description;
@@ -107,6 +114,7 @@ class ResponseMicroDetails {
     if (this.gallery != null) {
       data['gallery'] = this.gallery.map((v) => v.toJson()).toList();
     }
+    data['hsn'] = this.hsn;
     data['in_cart'] = this.inCart;
     data['in_favorits'] = this.inFavorits;
     data['mrp'] = this.mrp.toDouble();

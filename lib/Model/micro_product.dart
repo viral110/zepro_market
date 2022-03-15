@@ -48,12 +48,13 @@ class MicroProduct {
 
 class ResponseMicro {
   Banner banner;
+  bool cartStatus;
   int cartoon;
   String category;
   double discountPercentage;
   double mrp;
   double price;
-  bool inCart;
+  int inCart;
   bool inFavorits;
   String productId;
   int stock;
@@ -61,6 +62,7 @@ class ResponseMicro {
 
   ResponseMicro(
       {this.banner,
+        this.cartStatus,
         this.cartoon,
         this.category,
         this.discountPercentage,
@@ -75,6 +77,7 @@ class ResponseMicro {
   ResponseMicro.fromJson(Map<String, dynamic> json) {
     banner =
     json['banner'] != null ? new Banner.fromJson(json['banner']) : null;
+    cartStatus = json['cart_status'];
     cartoon = json['cartoon'];
     category = json['category'];
     discountPercentage = json['discount_percentage'];
@@ -93,6 +96,7 @@ class ResponseMicro {
     if (this.banner != null) {
       data['banner'] = this.banner.toJson();
     }
+    data['cart_status'] = this.cartStatus;
     data['cartoon'] = this.cartoon;
     data['category'] = this.category;
     data['discount_percentage'] = this.discountPercentage.toDouble();

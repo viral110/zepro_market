@@ -1,12 +1,18 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.jalaram">
+    package="com.example.jalaram" >
    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    
    <application
         android:label="jalaram"
-        android:icon="@mipmap/ic_launcher">
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher"
+        android:requestLegacyExternalStorage="true">
         <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
+            android:exported="true"
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
@@ -38,5 +44,13 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-    </application>
+
+        <!-- <provider  android:name="android.support.v4.content.FileProvider" android:authorities="com.ulo.provider" android:grantUriPermissions="true" android:exported="false">
+                <meta-data 
+                    tools:replace="android:resource"
+                    android:name="android.support.FILE_PROVIDER_PATHS" 
+                    android:resource="@xml/provider_paths" />
+        </provider> -->
+
+   </application>
 </manifest>

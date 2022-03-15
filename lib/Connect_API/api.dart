@@ -7,6 +7,8 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:http/http.dart' as http;
 import 'package:jalaram/Data_Provider/data_provider.dart';
 import 'package:jalaram/Helper/string_helper.dart';
+import 'package:jalaram/Model/decrement_product_model.dart';
+import 'package:jalaram/Model/fetch_cart_item_model.dart';
 import 'package:jalaram/Model/get_wishlist_products.dart';
 import 'package:jalaram/Model/micro_product.dart';
 import 'package:jalaram/Model/micro_product_details.dart';
@@ -154,23 +156,26 @@ class ApiServices {
       debugPrint("Error in addWishList : ${e.toString()}");
     }
   }
-  
-  Future getWishListProducts (BuildContext context) async {
-    try{
+
+  Future getWishListProducts(BuildContext context) async {
+    try {
       String aToken = await storageKey.read(key: 'access_token');
       final result = await InternetAddress.lookup("google.com");
-      if(result.isNotEmpty && result[0].rawAddress.isNotEmpty){
-        var url = Uri.parse(StringHelper.BASE_URL + "api/user/get_favorite_products");
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        var url =
+            Uri.parse(StringHelper.BASE_URL + "api/user/get_favorite_products");
         final response = await http.get(url, headers: {
           "Accept": "Application/json",
           'Authorization': 'Bearer $aToken',
         });
         var decoded = jsonDecode(response.body);
-        if(response.statusCode == 200){
-          GetWishListProducts getWishListProducts = GetWishListProducts.fromJson(decoded);
-          Provider.of<DataProvider>(context,listen: false).getWishProducts(getWishListProducts);
+        if (response.statusCode == 200) {
+          GetWishListProducts getWishListProducts =
+              GetWishListProducts.fromJson(decoded);
+          Provider.of<DataProvider>(context, listen: false)
+              .getWishProducts(getWishListProducts);
           return response;
-        } else if(response.statusCode == 401){
+        } else if (response.statusCode == 401) {
           getRefreshToken();
         } else {
           Fluttertoast.showToast(msg: "${decoded['message']}");
@@ -182,5 +187,99 @@ class ApiServices {
       Fluttertoast.showToast(msg: "${e.toString()}");
     }
   }
-  
+
+  Future incrementProducts(String productId, int numberProduct) async {
+    try {
+      String aToken = await storageKey.read(key: 'access_token');
+      final result = await InternetAddress.lookup("google.com");
+      debugPrint("$numberProduct");
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        var url = Uri.parse(StringHelper.BASE_URL +
+            "api/user/add_to_cart/$productId?item_count=$numberProduct");
+        final response = await http.get(url, headers: {
+          "Accept": "Application/json",
+          'Authorization': 'Bearer $aToken',
+        });
+        var decoded = jsonDecode(response.body);
+        if (response.statusCode == 200) {
+          Fluttertoast.showToast(msg: "Increment available");
+          debugPrint("Increment Available");
+        } else if (response.statusCode == 401) {
+          getRefreshToken();
+        } else {
+          debugPrint("Error");
+          // Fluttertoast.showToast(msg: "${decoded['message']}");
+          debugPrint("Error : ${decoded['message']}");
+        }
+      } else {
+        Fluttertoast.showToast(msg: "No Internet!!!");
+      }
+    } catch (e) {
+      Fluttertoast.showToast(msg: "${e.toString()}");
+      debugPrint("Error : ${e.toString()}");
+
+    }
+  }
+
+  Future decrementProducts(String productId,int numberProduct,BuildContext context) async {
+    try{
+      String aToken = await storageKey.read(key: 'access_token');
+      final result = await InternetAddress.lookup("google.com");
+      debugPrint("$numberProduct");
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty){
+        var url = Uri.parse(StringHelper.BASE_URL + "api/user/reduce_cart_item/$productId?item_count=$numberProduct");
+        final response = await http.get(url, headers: {
+          "Accept": "Application/json",
+          'Authorization': 'Bearer $aToken',
+        });
+        var decoded = jsonDecode(response.body);
+        if(response.statusCode == 200){
+
+          Fluttertoast.showToast(msg: "Decrement available");
+          debugPrint("Decrement Available");
+        }
+        else if (response.statusCode == 401) {
+          getRefreshToken();
+        } else {
+          Fluttertoast.showToast(msg: "${decoded['message']}");
+        }
+      }
+      else{
+        Fluttertoast.showToast(msg: "No Internet!!!");
+      }
+    } catch (e) {
+      Fluttertoast.showToast(msg: "${e.toString()}");
+    }
+  }
+
+  Future fetchAddToCartItem (BuildContext context) async {
+    try{
+      String aToken = await storageKey.read(key: 'access_token');
+      final result = await InternetAddress.lookup("google.com");
+      if(result.isNotEmpty && result[0].rawAddress.isNotEmpty){
+        var url = Uri.parse(StringHelper.BASE_URL + "api/user/get_cart_items");
+        final response = await http.get(url,headers: {
+          "Accept": "Application/json",
+          'Authorization': 'Bearer $aToken',
+        });
+        var decoded = jsonDecode(response.body);
+        if(response.statusCode == 200){
+          FetchAddToCartItem fetchAddToCartItem = FetchAddToCartItem.fromJson(decoded);
+          Provider.of<DataProvider>(context,listen: false).fetchCartItems(fetchAddToCartItem);
+          debugPrint("Fetch Add to Cart Item");
+
+          return response;
+        } else if(response.statusCode == 401){
+          getRefreshToken();
+        } else{
+          Fluttertoast.showToast(msg: "${decoded['message']}");
+        }
+      } else {
+        Fluttertoast.showToast(msg: "No Internet!!!");
+      }
+    }catch (e){
+      Fluttertoast.showToast(msg: "${e.toString()}");
+    }
+  }
+
 }

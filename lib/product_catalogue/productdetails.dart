@@ -1,23 +1,33 @@
 import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
+import 'dart:typed_data';
+import 'dart:core';
 
 import 'package:carousel_pro/carousel_pro.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+
 import 'package:flutter/cupertino.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_html/flutter_html.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:favorite_button/favorite_button.dart';
 import 'package:http/http.dart';
 import 'package:jalaram/Connect_API/api.dart';
 import 'package:jalaram/Model/micro_product_details.dart';
+import 'package:modern_form_esys_flutter_share/modern_form_esys_flutter_share.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:share/share.dart';
+
 import 'package:video_player/video_player.dart';
 import 'dart:ui' as ui;
+import 'package:http/http.dart' as http;
+
 import 'package:url_launcher/url_launcher.dart';
+// import 'package:modern_form_esys_flutter_share/modern_form_esys_flutter_share.dart';
 
 VideoPlayerController _videoPlayerController;
 
@@ -34,14 +44,6 @@ class _ProductDetailsState extends State<ProductDetails> {
   PageController controller = PageController();
   // Color color = Colors.grey;
 
-  List<String> videoLink = [
-    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
-    "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
-  ];
-
-  String videoUrl =
-      "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4";
-
   bool isLoading = false;
   MicroProductDetails mpd;
 
@@ -52,6 +54,7 @@ class _ProductDetailsState extends State<ProductDetails> {
   }
 
   List<String> storeVideo = [];
+  List<String> storeImage = [];
 
   fetchMicroProductDetails() async {
     await Future.delayed(Duration(milliseconds: 100), () async {
@@ -63,6 +66,10 @@ class _ProductDetailsState extends State<ProductDetails> {
         mpd = MicroProductDetails.fromJson(decoded);
         debugPrint("MPD : ${mpd.status}");
         for (int i = 0; i < mpd.response.banners.length; i++) {
+          if (mpd.response.banners[i].mediaType == "image") {
+            storeImage
+                .add("${mpd.urls.image}/${mpd.response.banners[i].media}");
+          }
           if (mpd.response.banners[i].mediaType == "video") {
             storeVideo.add(mpd.response.banners[i].media);
             _videoPlayerController = VideoPlayerController.network(
@@ -101,6 +108,9 @@ class _ProductDetailsState extends State<ProductDetails> {
   int currentPageValue = 0;
 
   bool onTapHeart = false;
+  bool valueImage = false;
+  bool valueDesc = false;
+  bool valueVideo = false;
 
   void getChangedPageAndMoveBar(int page) {
     currentPageValue = page;
@@ -109,7 +119,6 @@ class _ProductDetailsState extends State<ProductDetails> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -240,7 +249,160 @@ class _ProductDetailsState extends State<ProductDetails> {
                             ),
                           ),
                           IconButton(
-                              onPressed: () {},
+                              onPressed: () {
+                                return showDialog(
+                                  context: context,
+                                  builder: (context) {
+                                    return StatefulBuilder(
+                                      builder: (context, setState) => Dialog(
+                                        child: Container(
+                                          height: MediaQuery.of(context)
+                                                  .size
+                                                  .height /
+                                              3.2,
+                                          width: MediaQuery.of(context)
+                                                  .size
+                                                  .width,
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(10),
+                                            color: Colors.white,
+                                          ),
+                                          child: Padding(
+                                            padding: const EdgeInsets.all(8.0),
+                                            child: Padding(
+                                              padding: const EdgeInsets.all(8.0),
+                                              child: Column(
+                                                // mainAxisSize: MainAxisSize.min,
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    "What do you want to share?",
+                                                    style: GoogleFonts.dmSans(
+                                                      fontSize: 16,
+                                                      color: Colors.black,
+                                                    ),
+                                                  ),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    // crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Checkbox(
+                                                        value: valueImage,
+                                                        onChanged: (value) {
+                                                          setState(() {
+                                                            debugPrint(
+                                                                value.toString());
+                                                            valueImage = value;
+                                                          });
+                                                        },
+                                                      ),
+                                                      Text(
+                                                        "Images",
+                                                        style: GoogleFonts.dmSans(
+                                                          fontSize: 16,
+                                                          color: Colors.black,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    // crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Checkbox(
+                                                        value: valueVideo,
+                                                        onChanged: (value) {
+                                                          setState(() {
+                                                            debugPrint(
+                                                                value.toString());
+                                                            valueVideo = value;
+                                                          });
+                                                        },
+                                                      ),
+                                                      Text(
+                                                        "Video",
+                                                        style: GoogleFonts.dmSans(
+                                                          fontSize: 16,
+                                                          color: Colors.black,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Row(
+                                                    mainAxisAlignment:
+                                                        MainAxisAlignment.start,
+                                                    // crossAxisAlignment: CrossAxisAlignment.start,
+                                                    children: [
+                                                      Checkbox(
+                                                        splashRadius: 0,
+                                                        value: valueDesc,
+                                                        onChanged: (value) {
+                                                          setState(() {
+                                                            debugPrint(
+                                                                value.toString());
+                                                            valueDesc = value;
+                                                          });
+                                                        },
+                                                      ),
+                                                      Text(
+                                                        "Description",
+                                                        style: GoogleFonts.dmSans(
+                                                          fontSize: 16,
+                                                          color: Colors.black,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Spacer(),
+                                                  Row(
+                                                    mainAxisAlignment: MainAxisAlignment.end,
+                                                    children: [
+                                                      Container(
+                                                        padding: EdgeInsets.all(10),
+                                                        decoration: BoxDecoration(
+                                                          color: Colors.lightBlueAccent,
+                                                          borderRadius: BorderRadius.circular(5),
+                                                        ),
+                                                        child: Text("Cancel"),
+                                                      ),
+                                                      SizedBox(
+                                                        width: 10,
+                                                      ),
+                                                      InkWell(
+                                                        onTap: () {
+                                                          if(valueImage == true){
+                                                            setState((){
+                                                              isPrepareImage == false ? Center(child: CircularProgressIndicator(),): imageShare();
+                                                            });
+                                                          }
+                                                        },
+                                                        child: Container(
+                                                          padding: EdgeInsets.all(10),
+                                                          decoration: BoxDecoration(
+                                                            color: Colors.lightBlueAccent,
+                                                            borderRadius: BorderRadius.circular(5),
+                                                          ),
+                                                          child: Text("Send"),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                );
+                              },
                               icon: Icon(
                                 Icons.share,
                                 size: 18,
@@ -253,7 +415,9 @@ class _ProductDetailsState extends State<ProductDetails> {
                       Text(
                         "${mpd.response.category}",
                         style: GoogleFonts.dmSans(
-                            fontSize: 13.5, color: Colors.grey, letterSpacing: 2.5),
+                            fontSize: 13.5,
+                            color: Colors.grey,
+                            letterSpacing: 2.5),
                       ),
                       SizedBox(
                         height: 5,
@@ -267,13 +431,16 @@ class _ProductDetailsState extends State<ProductDetails> {
                               //   width: 12,
                               //   height: 12,
                               // ),
-                              Text("Rs.",style: GoogleFonts.dmSans(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                  letterSpacing: 1,
-                                  fontSize: 15),),
                               Text(
-                                "${mpd.response.price.toString().substring(0,3)}",
+                                "Rs.",
+                                style: GoogleFonts.dmSans(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.black87,
+                                    letterSpacing: 1,
+                                    fontSize: 15),
+                              ),
+                              Text(
+                                "${mpd.response.price.toString().substring(0, 3)}",
                                 style: GoogleFonts.dmSans(
                                     fontWeight: FontWeight.bold,
                                     color: Colors.black87,
@@ -288,11 +455,14 @@ class _ProductDetailsState extends State<ProductDetails> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.start,
                             children: [
-                              Text("Rs.",style: GoogleFonts.dmSans(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.grey,
-                                  letterSpacing: 1,
-                                  fontSize: 15),),
+                              Text(
+                                "Rs.",
+                                style: GoogleFonts.dmSans(
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.grey,
+                                    letterSpacing: 1,
+                                    fontSize: 15),
+                              ),
                               Text(
                                 "${mpd.response.mrp.toString()}",
                                 style: GoogleFonts.dmSans(
@@ -337,86 +507,15 @@ class _ProductDetailsState extends State<ProductDetails> {
                                     } else {
                                       setState(() {
                                         mpd.response.inFavorits = true;
-                                        ApiServices().addAndDeleteToFavourite(mpd.response.productId);
-
+                                        ApiServices().addAndDeleteToFavourite(
+                                            mpd.response.productId);
                                       });
                                     }
                                   },
-                                  icon: Icon(Icons.favorite_border, color: Colors.black,))
-                          // FavoriteButton(
-                          //   iconSize: 35,
-                          //   isFavorite: true,
-                          //   valueChanged: (_isFavorite) {
-                          //     if (_isFavorite == false) {
-                          //       return showDialog(
-                          //         context: context,
-                          //         builder: (context) => Container(
-                          //           width: MediaQuery.of(context).size.width / 1.2,
-                          //           child: AlertDialog(
-                          //             insetPadding: EdgeInsets.all(10),
-                          //             contentPadding: EdgeInsets.zero,
-                          //             title: Text(
-                          //               "Are you sure you want remove this items?",
-                          //               style: GoogleFonts.aBeeZee(fontSize: 14),
-                          //             ),
-                          //             actions: [
-                          //               Container(
-                          //                 child: RaisedButton(
-                          //                   onPressed: () {
-                          //                     setState(() {
-                          //                       //Navigator.pop(context);
-                          //                       if (_isFavorite == false) {
-                          //                         _isFavorite = true;
-                          //                       }
-                          //                       print(_isFavorite);
-                          //                       // if(_isFavorite == true){
-                          //                       //   setState(() {
-                          //                       //     color = color == Colors.grey ? Colors.red : Colors.grey;
-                          //                       //   });
-                          //                       // }
-                          //                     });
-                          //                     Navigator.pop(context);
-                          //                   },
-                          //                   color: Colors.white,
-                          //                   child: Text(
-                          //                     "Cancel",
-                          //                     style: GoogleFonts.aBeeZee(
-                          //                         color:
-                          //                             Color.fromRGBO(22, 2, 105, 1)),
-                          //                   ),
-                          //                 ),
-                          //                 decoration: BoxDecoration(
-                          //                   border: Border.all(
-                          //                       color: Color.fromRGBO(22, 2, 105, 1),
-                          //                       width: 1.5),
-                          //                   borderRadius: BorderRadius.circular(5),
-                          //                 ),
-                          //                 height: 40,
-                          //               ),
-                          //               Container(
-                          //                 decoration: BoxDecoration(
-                          //                   borderRadius: BorderRadius.circular(3),
-                          //                 ),
-                          //                 child: RaisedButton(
-                          //                   onPressed: () {
-                          //                     Navigator.pop(context);
-                          //                   },
-                          //                   child: Text(
-                          //                     "Remove",
-                          //                     style: GoogleFonts.aBeeZee(
-                          //                         color: Colors.white),
-                          //                   ),
-                          //                   color: Color.fromRGBO(22, 2, 105, 1),
-                          //                 ),
-                          //                 height: 40,
-                          //               ),
-                          //             ],
-                          //           ),
-                          //         ),
-                          //       );
-                          //     }
-                          //   },
-                          // ),
+                                  icon: Icon(
+                                    Icons.favorite_border,
+                                    color: Colors.black,
+                                  ))
                         ],
                       ),
                       SizedBox(
@@ -437,7 +536,6 @@ class _ProductDetailsState extends State<ProductDetails> {
                                 text: ' Items/Cartoon',
                                 style: GoogleFonts.dmSans(
                                     color: Colors.grey.shade600,
-
                                     letterSpacing: 1.5),
                               ),
                             ]),
@@ -458,8 +556,8 @@ class _ProductDetailsState extends State<ProductDetails> {
                               onPressed: () {},
                               child: Text(
                                 "ADD",
-                                style: GoogleFonts.dmSans(
-                                    color: Colors.blue[900]),
+                                style:
+                                    GoogleFonts.dmSans(color: Colors.blue[900]),
                               ),
                             ),
                           ),
@@ -475,19 +573,38 @@ class _ProductDetailsState extends State<ProductDetails> {
                           width: 170,
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(10),
-                            border: Border.all(color: Colors.lightBlue,width: 1),
+                            border:
+                                Border.all(color: Colors.lightBlue, width: 1),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               mpd.response.stock != 0
-                              ?Text("${mpd.response.stock}",style: GoogleFonts.dmSans(fontSize: 20,fontWeight: FontWeight.bold),)
-                              : Container(),
+                                  ? Text(
+                                      "${mpd.response.stock}",
+                                      style: GoogleFonts.dmSans(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold),
+                                    )
+                                  : Container(),
                               mpd.response.stock == 0
-                              ?Text("Out Of Stock",style: GoogleFonts.dmSans(fontSize: 18,color: Colors.red, fontWeight: FontWeight.bold,letterSpacing: 1.5),)
-                                  :Text("In Stock",style: GoogleFonts.dmSans(fontSize: 20, color: Colors.green,fontWeight: FontWeight.bold,letterSpacing: 1.5),)
-
+                                  ? Text(
+                                      "Out Of Stock",
+                                      style: GoogleFonts.dmSans(
+                                          fontSize: 18,
+                                          color: Colors.red,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 1.5),
+                                    )
+                                  : Text(
+                                      "In Stock",
+                                      style: GoogleFonts.dmSans(
+                                          fontSize: 20,
+                                          color: Colors.green,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 1.5),
+                                    )
                             ],
                           ),
                         ),
@@ -597,7 +714,22 @@ class _ProductDetailsState extends State<ProductDetails> {
                                 letterSpacing: 2,
                                 fontSize: 18),
                           ),
-                          Icon(Icons.copy),
+                          InkWell(
+                              onTap: () async {
+                                // videoShare();
+                                // imageShare();
+                                // removeAllHtmlTags(mpd.response.description);
+                                Clipboard.setData(ClipboardData(
+                                        text: removeAllHtmlTags(
+                                            mpd.response.description, 1)))
+                                    .then((value) {
+                                  setState(() {
+                                    Fluttertoast.showToast(msg: "Copied");
+                                  });
+                                });
+                                // FlutterClipboard.copy(removeAllHtmlTags(mpd.response.description,1)).then(( value ) => print('copied'));
+                              },
+                              child: Icon(Icons.copy)),
                         ],
                       ),
                       SizedBox(
@@ -622,11 +754,13 @@ class _ProductDetailsState extends State<ProductDetails> {
                                 children: [
                                   Container(
                                     width: MediaQuery.of(context).size.width,
-                                    height: MediaQuery.of(context).size.height / 2.6,
+                                    height: MediaQuery.of(context).size.height /
+                                        2.6,
                                     decoration: BoxDecoration(
                                         image: DecorationImage(
                                             image: NetworkImage(
-                                                "${mpd.urls.image}/${mpd.response.gallery[index].media}"),fit: BoxFit.fill)),
+                                                "${mpd.urls.image}/${mpd.response.gallery[index].media}"),
+                                            fit: BoxFit.fill)),
                                   ),
                                   SizedBox(
                                     height: 10,
@@ -641,24 +775,24 @@ class _ProductDetailsState extends State<ProductDetails> {
                         height: 20,
                       ),
                       mpd.response.youtubeLink == ""
-                      ?Container()
-                     : RichText(
-                          text: TextSpan(children: [
-                        TextSpan(
-                            text: "Youtube Link : ",
-                            style: GoogleFonts.aBeeZee(
-                                color: Colors.black, fontSize: 16)),
-                        TextSpan(
-                            text: mpd.response.youtubeLink,
-                            style: GoogleFonts.aBeeZee(
-                                color: Colors.blue,
-                                fontSize: 16,
-                                decoration: TextDecoration.underline),
-                            recognizer: TapGestureRecognizer()
-                              ..onTap = () {
-                                launch(mpd.response.youtubeLink);
-                              }),
-                      ])),
+                          ? Container()
+                          : RichText(
+                              text: TextSpan(children: [
+                              TextSpan(
+                                  text: "Youtube Link : ",
+                                  style: GoogleFonts.aBeeZee(
+                                      color: Colors.black, fontSize: 16)),
+                              TextSpan(
+                                  text: mpd.response.youtubeLink,
+                                  style: GoogleFonts.aBeeZee(
+                                      color: Colors.blue,
+                                      fontSize: 16,
+                                      decoration: TextDecoration.underline),
+                                  recognizer: TapGestureRecognizer()
+                                    ..onTap = () {
+                                      launch(mpd.response.youtubeLink);
+                                    }),
+                            ])),
                       SizedBox(
                         height: 20,
                       ),
@@ -670,31 +804,74 @@ class _ProductDetailsState extends State<ProductDetails> {
     );
   }
 
-  // Future<Null> urlFileShare() async {
-  //   setState(() {
-  //     button2 = true;
-  //   });
-  //   final RenderBox box = context.findRenderObject();
-  //   if (Platform.isAndroid) {
-  //     var url = 'https://i.ytimg.com/vi/fq4N0hgOWzU/maxresdefault.jpg';
-  //     var response = await get(Uri.parse(url));
-  //     final documentDirectory = (await getExternalStorageDirectory()).path;
-  //     File imgFile = new File('$documentDirectory/flutter.png');
-  //     imgFile.writeAsBytesSync(response.bodyBytes);
-  //     Share.shareFile(('$documentDirectory/flutter.png'),
-  //         subject: 'URL File Share',
-  //         text: 'Hello, check your share files!',
-  //         sharePositionOrigin: box.localToGlobal(Offset.zero) & box.size);
-  //   } else {
-  //     Share.share('Hello, check your share files!',
-  //         subject: 'URL File Share',
-  //         sharePositionOrigin: box.localToGlobal(Offset.zero) & box.size);
-  //   }
-  //   setState(() {
-  //     button2 = false;
-  //   });
-  // }
+  removeAllHtmlTags(String htmlText, int number) {
+    RegExp exp =
+        RegExp(r'<[^>]*>|&[^;]+;', multiLine: true, caseSensitive: true);
 
+    String h1 = htmlText.replaceAll(exp, '');
+    // return
+    return number == 1 ? h1 : Share.text("h1", h1, "text/plain");
+  }
+
+  bool isPrepareImage = false;
+
+  imageShare() async {
+    var request;
+    Map<String, List<int>> imgMap = {};
+    Uint8List bytes;
+
+    setState(() {
+      isPrepareImage = false;
+    });
+
+    for (int i = 0; i < mpd.response.banners.length; i++) {
+      if (mpd.response.banners[i].mediaType == 'image') {
+        request = await HttpClient().getUrl(
+            Uri.parse("${mpd.urls.image}/${mpd.response.banners[i].media}"));
+
+        var response = await request.close();
+        print(response);
+        bytes = await consolidateHttpClientResponseBytes(response);
+
+        imgMap[i.toString() + ".jpg"] = bytes;
+      }
+    }
+
+    debugPrint("Map Data : $imgMap");
+
+    // await Share.files("esysimages",{
+    //   'images1':bytes,
+    // }, 'image/jpg',);
+
+    setState(() {
+      isPrepareImage = true;
+    });
+
+    await Share.files(
+      "esysimages",
+      imgMap,
+      'image/jpg',
+    );
+  }
+
+  videoShare() async {
+    var request;
+    Map<String, List<int>> imgMap = {};
+    Uint8List bytes;
+    for (int i = 0; i < mpd.response.banners.length; i++) {
+      if (mpd.response.banners[i].mediaType == 'video') {
+        request = await HttpClient().getUrl(
+            Uri.parse("${mpd.urls.video}/${mpd.response.banners[i].media}"));
+
+        var response = await request.close();
+        print(response);
+        bytes = await consolidateHttpClientResponseBytes(response);
+
+        imgMap[i.toString() + ".mp4"] = bytes;
+      }
+    }
+    await Share.files("video", imgMap, "video/mp4");
+  }
 
   Widget circleBar(bool isActive) {
     return AnimatedContainer(
@@ -765,5 +942,14 @@ class _ProductDetailsState extends State<ProductDetails> {
       ),
     );
   }
-}
 
+  shareImage() async {
+    final response = await get(
+        Uri.parse('https://i.ytimg.com/vi/fq4N0hgOWzU/maxresdefault.jpg'));
+    final bytes = response.bodyBytes;
+    Uint8List list = bytes.buffer.asUint8List();
+    final tempDir = await getTemporaryDirectory();
+    final file = File('${tempDir.path}/image.jpg');
+    file.writeAsBytesSync(list);
+  }
+}

@@ -1,16 +1,17 @@
+import 'dart:convert';
 
-class GetWishListProducts {
-  List<ResponseGetWishList> response;
+class FetchAddToCartItem {
+  List<Cart> cart;
   bool status;
   Urls urls;
 
-  GetWishListProducts({this.response, this.status});
+  FetchAddToCartItem({this.cart, this.status, this.urls});
 
-  GetWishListProducts.fromJson(Map<String, dynamic> json) {
-    if (json['response'] != null) {
-      response = <ResponseGetWishList>[];
-      json['response'].forEach((v) {
-        response.add(new ResponseGetWishList.fromJson(v));
+  FetchAddToCartItem.fromJson(Map<String, dynamic> json) {
+    if (json['cart'] != null) {
+      cart = <Cart>[];
+      json['cart'].forEach((v) {
+        cart.add(new Cart.fromJson(v));
       });
     }
     status = json['status'];
@@ -19,8 +20,8 @@ class GetWishListProducts {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
-    if (this.response != null) {
-      data['response'] = this.response.map((v) => v.toJson()).toList();
+    if (this.cart != null) {
+      data['cart'] = this.cart.map((v) => v.toJson()).toList();
     }
     data['status'] = this.status;
     if (this.urls != null) {
@@ -30,40 +31,59 @@ class GetWishListProducts {
   }
 }
 
-class ResponseGetWishList {
+class Cart {
+  int count;
+  String markDatetime;
+  Product product;
+
+  Cart({this.count, this.markDatetime, this.product});
+
+  Cart.fromJson(Map<String, dynamic> json) {
+    count = json['count'];
+    markDatetime = json['mark_datetime'];
+    product =
+    json['product'] != null ? new Product.fromJson(json['product']) : null;
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['count'] = this.count;
+    data['mark_datetime'] = this.markDatetime;
+    if (this.product != null) {
+      data['product'] = this.product.toJson();
+    }
+    return data;
+  }
+}
+
+class Product {
   Banner banner;
-  bool cartStatus;
   int cartoon;
   String category;
   double discountPercentage;
-  int inCart;
   double mrp;
   double price;
   String productId;
   int stock;
   String title;
 
-  ResponseGetWishList(
+  Product(
       {this.banner,
-        this.cartStatus,
         this.cartoon,
         this.category,
         this.discountPercentage,
-        this.inCart,
         this.mrp,
         this.price,
         this.productId,
         this.stock,
         this.title});
 
-  ResponseGetWishList.fromJson(Map<String, dynamic> json) {
+  Product.fromJson(Map<String, dynamic> json) {
     banner =
     json['banner'] != null ? new Banner.fromJson(json['banner']) : null;
-    cartStatus = json['cart_status'];
     cartoon = json['cartoon'];
     category = json['category'];
     discountPercentage = json['discount_percentage'];
-    inCart = json['in_cart'];
     mrp = json['mrp'];
     price = json['price'];
     productId = json['product_id'];
@@ -76,13 +96,11 @@ class ResponseGetWishList {
     if (this.banner != null) {
       data['banner'] = this.banner.toJson();
     }
-    data['cart_status'] = this.cartStatus;
     data['cartoon'] = this.cartoon;
     data['category'] = this.category;
-    data['discount_percentage'] = this.discountPercentage.toDouble();
-    data['in_cart'] = this.inCart;
-    data['mrp'] = this.mrp.toDouble();
-    data['price'] = this.price.toDouble();
+    data['discount_percentage'] = this.discountPercentage;
+    data['mrp'] = this.mrp;
+    data['price'] = this.price;
     data['product_id'] = this.productId;
     data['stock'] = this.stock;
     data['title'] = this.title;
