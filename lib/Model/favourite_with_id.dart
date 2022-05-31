@@ -28,8 +28,9 @@ class IncrementNumber {
   String productName;
   bool isVisible;
   int counter;
+  double priceTotal;
 
-  IncrementNumber({this.productName,this.isVisible,this.counter});
+  IncrementNumber({this.productName,this.isVisible,this.counter,this.priceTotal});
 
 
   void toggleNumber(){

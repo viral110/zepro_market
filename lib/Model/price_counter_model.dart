@@ -1,29 +1,44 @@
-import 'dart:convert';
+import 'dart:ffi';
 
-class FetchAddToCartItem {
-  List<Cart> cart;
+class PriceCounterModel {
+  int currentPage;
+  int perPage;
+  List<ResponsePriceCounter> response;
   bool status;
+  int totalPages;
   Urls urls;
 
-  FetchAddToCartItem({this.cart, this.status, this.urls});
+  PriceCounterModel(
+      {this.currentPage,
+      this.perPage,
+      this.response,
+      this.status,
+      this.totalPages,
+      this.urls});
 
-  FetchAddToCartItem.fromJson(Map<String, dynamic> json) {
-    if (json['cart'] != null) {
-      cart = <Cart>[];
-      json['cart'].forEach((v) {
-        cart.add(new Cart.fromJson(v));
+  PriceCounterModel.fromJson(Map<String, dynamic> json) {
+    currentPage = json['current_page'];
+    perPage = json['per_page'];
+    if (json['response'] != null) {
+      response = <ResponsePriceCounter>[];
+      json['response'].forEach((v) {
+        response.add(new ResponsePriceCounter.fromJson(v));
       });
     }
     status = json['status'];
+    totalPages = json['total_pages'];
     urls = json['urls'] != null ? new Urls.fromJson(json['urls']) : null;
   }
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
-    if (this.cart != null) {
-      data['cart'] = this.cart.map((v) => v.toJson()).toList();
+    data['current_page'] = this.currentPage;
+    data['per_page'] = this.perPage;
+    if (this.response != null) {
+      data['response'] = this.response.map((v) => v.toJson()).toList();
     }
     data['status'] = this.status;
+    data['total_pages'] = this.totalPages;
     if (this.urls != null) {
       data['urls'] = this.urls.toJson();
     }
@@ -31,63 +46,43 @@ class FetchAddToCartItem {
   }
 }
 
-class Cart {
-  int count;
-  bool inFavorits;
-  String markDatetime;
-
-  Product product;
-
-  Cart({this.count, this.markDatetime, this.product});
-
-  Cart.fromJson(Map<String, dynamic> json) {
-    count = json['count'];
-    inFavorits = json['in_favorits'];
-    markDatetime = json['mark_datetime'];
-    product =
-        json['product'] != null ? new Product.fromJson(json['product']) : null;
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['count'] = this.count;
-    data['in_favorits'] = this.inFavorits;
-    data['mark_datetime'] = this.markDatetime;
-    if (this.product != null) {
-      data['product'] = this.product.toJson();
-    }
-    return data;
-  }
-}
-
-class Product {
+class ResponsePriceCounter {
   Banner banner;
+  bool cartStatus;
   int cartoon;
   String category;
   double discountPercentage;
+  int inCart;
+  bool inFavorits;
   double mrp;
   double price;
   String productId;
   int stock;
   String title;
 
-  Product(
+  ResponsePriceCounter(
       {this.banner,
+      this.cartStatus,
       this.cartoon,
       this.category,
       this.discountPercentage,
+      this.inCart,
+      this.inFavorits,
       this.mrp,
       this.price,
       this.productId,
       this.stock,
       this.title});
 
-  Product.fromJson(Map<String, dynamic> json) {
+  ResponsePriceCounter.fromJson(Map<String, dynamic> json) {
     banner =
         json['banner'] != null ? new Banner.fromJson(json['banner']) : null;
+    cartStatus = json['cart_status'];
     cartoon = json['cartoon'];
     category = json['category'];
     discountPercentage = json['discount_percentage'];
+    inCart = json['in_cart'];
+    inFavorits = json['in_favorits'];
     mrp = json['mrp'];
     price = json['price'];
     productId = json['product_id'];
@@ -100,9 +95,12 @@ class Product {
     if (this.banner != null) {
       data['banner'] = this.banner.toJson();
     }
+    data['cart_status'] = this.cartStatus;
     data['cartoon'] = this.cartoon;
     data['category'] = this.category;
     data['discount_percentage'] = this.discountPercentage;
+    data['in_cart'] = this.inCart;
+    data['in_favorits'] = this.inFavorits;
     data['mrp'] = this.mrp;
     data['price'] = this.price;
     data['product_id'] = this.productId;

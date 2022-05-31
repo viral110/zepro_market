@@ -1,17 +1,15 @@
-import 'dart:convert';
-
-class FetchAddToCartItem {
-  List<Cart> cart;
+class HomeNewArrival {
+  List<ResponseNewArrival> response;
   bool status;
   Urls urls;
 
-  FetchAddToCartItem({this.cart, this.status, this.urls});
+  HomeNewArrival({this.response, this.status,this.urls});
 
-  FetchAddToCartItem.fromJson(Map<String, dynamic> json) {
-    if (json['cart'] != null) {
-      cart = <Cart>[];
-      json['cart'].forEach((v) {
-        cart.add(new Cart.fromJson(v));
+  HomeNewArrival.fromJson(Map<String, dynamic> json) {
+    if (json['response'] != null) {
+      response = <ResponseNewArrival>[];
+      json['response'].forEach((v) {
+        response.add(new ResponseNewArrival.fromJson(v));
       });
     }
     status = json['status'];
@@ -20,8 +18,8 @@ class FetchAddToCartItem {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
-    if (this.cart != null) {
-      data['cart'] = this.cart.map((v) => v.toJson()).toList();
+    if (this.response != null) {
+      data['response'] = this.response.map((v) => v.toJson()).toList();
     }
     data['status'] = this.status;
     if (this.urls != null) {
@@ -31,63 +29,37 @@ class FetchAddToCartItem {
   }
 }
 
-class Cart {
-  int count;
-  bool inFavorits;
-  String markDatetime;
-
-  Product product;
-
-  Cart({this.count, this.markDatetime, this.product});
-
-  Cart.fromJson(Map<String, dynamic> json) {
-    count = json['count'];
-    inFavorits = json['in_favorits'];
-    markDatetime = json['mark_datetime'];
-    product =
-        json['product'] != null ? new Product.fromJson(json['product']) : null;
-  }
-
-  Map<String, dynamic> toJson() {
-    final Map<String, dynamic> data = new Map<String, dynamic>();
-    data['count'] = this.count;
-    data['in_favorits'] = this.inFavorits;
-    data['mark_datetime'] = this.markDatetime;
-    if (this.product != null) {
-      data['product'] = this.product.toJson();
-    }
-    return data;
-  }
-}
-
-class Product {
+class ResponseNewArrival {
   Banner banner;
   int cartoon;
   String category;
-  double discountPercentage;
+  double  discountPercentage;
+  bool isTrending;
   double mrp;
   double price;
   String productId;
   int stock;
   String title;
 
-  Product(
+  ResponseNewArrival(
       {this.banner,
-      this.cartoon,
-      this.category,
-      this.discountPercentage,
-      this.mrp,
-      this.price,
-      this.productId,
-      this.stock,
-      this.title});
+        this.cartoon,
+        this.category,
+        this.discountPercentage,
+        this.isTrending,
+        this.mrp,
+        this.price,
+        this.productId,
+        this.stock,
+        this.title});
 
-  Product.fromJson(Map<String, dynamic> json) {
+  ResponseNewArrival.fromJson(Map<String, dynamic> json) {
     banner =
-        json['banner'] != null ? new Banner.fromJson(json['banner']) : null;
+    json['banner'] != null ? new Banner.fromJson(json['banner']) : null;
     cartoon = json['cartoon'];
     category = json['category'];
     discountPercentage = json['discount_percentage'];
+    isTrending = json['isTrending'];
     mrp = json['mrp'];
     price = json['price'];
     productId = json['product_id'];
@@ -103,6 +75,7 @@ class Product {
     data['cartoon'] = this.cartoon;
     data['category'] = this.category;
     data['discount_percentage'] = this.discountPercentage;
+    data['isTrending'] = this.isTrending;
     data['mrp'] = this.mrp;
     data['price'] = this.price;
     data['product_id'] = this.productId;

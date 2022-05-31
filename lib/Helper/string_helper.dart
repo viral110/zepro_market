@@ -1,4 +1,4 @@
 class StringHelper {
-  static String BASE_URL = "https://testapps.pythonanywhere.com/";
+  static String BASE_URL = "http://128.199.16.80/";
   
 }

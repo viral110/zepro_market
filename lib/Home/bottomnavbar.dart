@@ -210,28 +210,152 @@ class BottomNavBar extends StatefulWidget {
 }
 
 class _BottomNavBarState extends State<BottomNavBar> {
+  final tabsView = <Widget>[
+    HomePage(),
+    WishList(),
+    Products(),
+    AddToCartPage(),
+    Profile(),
+  ];
+
+  int _currentIndex = 0;
+
+  GlobalKey<ScaffoldState> drawerKey = GlobalKey<ScaffoldState>();
+
+  void _updateIndex(int value) {
+    setState(() {
+      _currentIndex = value;
+      ApiServices().microProducts(context);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: FloatingNavBar(
-        resizeToAvoidBottomInset: false,
-        color: Colors.green,
-        items: [
-          FloatingNavBarItem(
-            iconData: Icons.home,
-            title: 'Home',
-            page: HomePage(),
+        key: drawerKey,
+        body: tabsView[_currentIndex],
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+        floatingActionButton: Padding(
+          padding: const EdgeInsets.all(13.0),
+          child: Card(
+            elevation: 4,
+            child: Container(
+              height: 65,
+              decoration: BoxDecoration(
+                // border: Border.all(width: 1.3),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: BottomNavigationBar(
+                    elevation: 20,
+                    type: BottomNavigationBarType.fixed,
+                    selectedItemColor: Color.fromRGBO(255, 78, 91, 1),
+                    selectedFontSize: 12,
+                    selectedLabelStyle: GoogleFonts.aBeeZee(
+                      letterSpacing: 1,
+                    ),
+                    backgroundColor: Colors.white,
+                    unselectedItemColor: Colors.black,
+                    currentIndex: _currentIndex,
+                    onTap: _updateIndex,
+                    items: [
+                      BottomNavigationBarItem(
+                        icon: _currentIndex == 0
+                            ? Padding(
+                                padding: const EdgeInsets.only(bottom: 7),
+                                child: Image.asset(
+                                  'assets/new/home.png',
+                                  height: 23,
+                                  width: 23,
+                                ),
+                              )
+                            : Padding(
+                                padding: const EdgeInsets.only(bottom: 7),
+                                child: Image.asset(
+                                  "assets/new/home3.png",
+                                  height: 23,
+                                  width: 23,
+                                  color: Colors.black,
+                                ),
+                              ),
+                        label: "Home",
+                      ),
+                      BottomNavigationBarItem(
+                        icon: _currentIndex == 1
+                            ? Padding(
+                                padding: const EdgeInsets.only(bottom: 7),
+                                child: Image.asset(
+                                  "assets/new/Wishlist.png",
+                                  height: 23,
+                                  width: 23,
+                                ),
+                              )
+                            : Padding(
+                                padding: const EdgeInsets.only(bottom: 7),
+                                child: Image.asset(
+                                  "assets/new/Wishlist2.png",
+                                  height: 23,
+                                  width: 23,
+                                  color: Colors.black,
+                                ),
+                              ),
+                        label: "Wishlist",
+                      ),
+                      BottomNavigationBarItem(
+                          icon: _currentIndex == 2
+                              ? Image.asset(
+                                  "assets/new/Product2.png",
+                                  height: 35,
+                                  width: 35,
+                                  fit: BoxFit.fill,
+                                )
+                              : Image.asset(
+                                  "assets/new/Product.png",
+                                  height: 32,
+                                  width: 32,
+                                  fit: BoxFit.fill,
+                                  color: Colors.black,
+                                ),
+                          label: "Products"),
+                      BottomNavigationBarItem(
+                          icon: _currentIndex == 3
+                              ? Padding(
+                                  padding: const EdgeInsets.only(bottom: 7),
+                                  child: Image.asset(
+                                    "assets/new/cart4.png",
+                                    height: 27,
+                                    width: 27,
+                                  ),
+                                )
+                              : Image.asset(
+                                  "assets/new/cart5.png",
+                                  height: 23,
+                                  width: 23,
+                                  color: Colors.black,
+                                ),
+                          label: "Cart"),
+                      BottomNavigationBarItem(
+                          icon: _currentIndex == 4
+                              ? Image.asset(
+                                  "assets/new/menu.png",
+                                  height: 27,
+                                  width: 27,
+                                  color: Color.fromRGBO(255, 78, 91, 1),
+                                  fit: BoxFit.fill,
+                                )
+                              : Image.asset(
+                                  "assets/new/menu.png",
+                                  height: 27,
+                                  width: 27,
+                                  color: Colors.black,
+                                  fit: BoxFit.fitHeight,
+                                ),
+                          label: "More"),
+                    ]),
+              ),
+            ),
           ),
-          FloatingNavBarItem(
-            iconData: Icons.account_circle,
-            title: 'Account',
-            page: WishList(),
-          )
-        ],
-        hapticFeedback: true,
-        horizontalPadding: 40,
-        selectedIconColor: Colors.white,
-      ),
-    );
+        ));
   }
 }

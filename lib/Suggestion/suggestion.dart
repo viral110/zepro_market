@@ -12,6 +12,7 @@ class Suggestion extends StatefulWidget {
 }
 
 class _SuggestionState extends State<Suggestion> {
+  List<File> files = [];
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -118,22 +119,59 @@ class _SuggestionState extends State<Suggestion> {
                   color: Colors.grey, fontSize: 15, letterSpacing: 1),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(left: 10, right: 300, top: 10),
-            child: Container(
-              height: 50,
-              child: GestureDetector(
-                  onTap: () {
-                    pickFiles();
-                  },
-                  child: Icon(
-                    Icons.add,
-                    color: Color.fromRGBO(255, 78, 91, 1),
-                  )),
-              decoration: BoxDecoration(
-                  color: Color.fromRGBO(255, 78, 91, 0.4),
-                  borderRadius: BorderRadius.circular(8)),
-            ),
+          Row(
+            children: [
+              Expanded(
+                flex: 0,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 10, right: 0, top: 10),
+                  child: Container(
+                    height: 50,
+                    width: 80,
+                    child: GestureDetector(
+                        onTap: () {
+                          pickFiles();
+                        },
+                        child: Icon(
+                          Icons.add,
+                          color: Color.fromRGBO(255, 78, 91, 1),
+                        )),
+                    decoration: BoxDecoration(
+                        color: Color.fromRGBO(255, 78, 91, 0.4),
+                        borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+              Expanded(
+                flex: 5,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 10, right: 0, top: 10),
+                  child: Container(
+                    width: MediaQuery.of(context).size.width,
+                    height: 50,
+                    child: ListView.builder(
+                      itemCount: files.length,
+                      shrinkWrap: true,
+                      scrollDirection: Axis.horizontal,
+                      itemBuilder: (context, index) {
+                      return Row(
+                        children: [
+
+                          Container(
+                            height: 50,
+                            width: 80,
+                            child: Image.file(File(files[index].path),),
+                            decoration: BoxDecoration(
+                                color: Color.fromRGBO(255, 78, 91, 0.4),
+                                borderRadius: BorderRadius.circular(8)),
+                          ),
+                        ],
+                      );
+                    },),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -147,7 +185,7 @@ class _SuggestionState extends State<Suggestion> {
         allowMultiple: true);
 
     if (result != null) {
-      List<File> files = result.paths.map((path) => File(path)).toList();
+      files = result.paths.map((path) => File(path)).toList();
     } else {
       // User canceled the picker
     }

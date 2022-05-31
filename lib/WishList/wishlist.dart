@@ -34,7 +34,7 @@ class _WishListState extends State<WishList> {
   }
 
   getFavouriteProducts() async {
-    await Future.delayed(Duration(milliseconds: 300), () async {
+    // await Future.delayed(Duration(milliseconds: 300), () async {
       Response response = await ApiServices().getWishListProducts(context);
       var decoded = jsonDecode(response.body);
       if (response.statusCode == 200) {
@@ -47,7 +47,7 @@ class _WishListState extends State<WishList> {
           isGetFavourite = true;
         });
       }
-    });
+    // });
   }
 
   @override
@@ -342,7 +342,7 @@ class _WishListState extends State<WishList> {
                                                               height: 10,
                                                             ),
                                                             Text(
-                                                              "${gwp.response[index].price.toString().replaceAll(regex, "")}",
+                                                              "${gwp.response[index].price.toInt().toString()}",
                                                               style: GoogleFonts.dmSans(
                                                                   fontWeight:
                                                                       FontWeight
@@ -369,7 +369,7 @@ class _WishListState extends State<WishList> {
                                                                   Colors.grey,
                                                             ),
                                                             Text(
-                                                              "${gwp.response[index].mrp.toString().replaceAll(regex, "")}",
+                                                              "${gwp.response[index].mrp.toInt().toString()}",
                                                               style: GoogleFonts.dmSans(
                                                                   decoration:
                                                                       TextDecoration
@@ -384,7 +384,7 @@ class _WishListState extends State<WishList> {
                                                           width: 4,
                                                         ),
                                                         Text(
-                                                          "${gwp.response[index].discountPercentage.toString()}% OFF",
+                                                          "${gwp.response[index].discountPercentage.toInt().toString()}% OFF",
                                                           style: GoogleFonts
                                                               .dmSans(
                                                                   color: Colors

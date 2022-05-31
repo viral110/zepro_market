@@ -5,11 +5,17 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart';
 import 'package:jalaram/Connect_API/api.dart';
+import 'package:jalaram/Data_Provider/data_provider.dart';
 import 'package:jalaram/Model/fetch_cart_item_model.dart';
 import 'package:collection/collection.dart';
+import 'package:jalaram/add_to_cart_part/confirm_order.dart';
+import 'package:jalaram/product_catalogue/products.dart';
+import 'package:provider/provider.dart';
 
 class AddToCartPage extends StatefulWidget {
-  const AddToCartPage({Key key}) : super(key: key);
+
+
+  const AddToCartPage({Key key,}) : super(key: key);
 
   @override
   _AddToCartPageState createState() => _AddToCartPageState();
@@ -25,54 +31,72 @@ class _AddToCartPageState extends State<AddToCartPage> {
 
   List<MyCartStoreNumber> storeNumber = [];
 
+  List<MyTotalInstantPriceMrp> storeMrpPriceBoth = [];
+
+
   num storePayAmount = 0;
   num storeDiscount = 0;
   num storeMrpValue = 0;
+  num storeTotalPriceChangeable = 0;
 
   num sum = 0;
   num mrpSum = 0;
 
   int storeTotalItem = 0;
+  int dummyVariable = 0;
 
   double discountProduct = 0;
 
   fetchAddToCartItem() async {
-    await Future.delayed(Duration(milliseconds: 500), () async {
-      Response response = await ApiServices().fetchAddToCartItem(context);
-      var decoded = jsonDecode(response.body);
+    // await Future.delayed(Duration(milliseconds: 500), () async {
+    Response response = await ApiServices().fetchAddToCartItem(context);
+    var decoded = jsonDecode(response.body);
 
-      if (response.statusCode == 200) {
-        fMyCart = FetchAddToCartItem.fromJson(decoded);
-        Fluttertoast.showToast(msg: "Fetch Add to Cart");
-        setState(() {
-          storeTotalItem = fMyCart.cart.length;
-        });
-        List.generate(fMyCart.cart.length, (index) {
-          subPrice.add(
-              fMyCart.cart[index].product.price * fMyCart.cart[index].count);
-          mrpPrice
-              .add(fMyCart.cart[index].product.mrp * fMyCart.cart[index].count);
-        });
-        storeNumber = List.generate(fMyCart.cart.length, (index) {
-          return MyCartStoreNumber(number: fMyCart.cart[index].count);
-        });
+    if (response.statusCode == 200) {
+      fMyCart = FetchAddToCartItem.fromJson(decoded);
+      Fluttertoast.showToast(msg: "Fetch Add to Cart");
 
-        for (num e in subPrice) {
-          sum += e;
-        }
-        for (num e in mrpPrice) {
-          mrpSum += e;
-        }
+      setState(() {
+        storeTotalItem = fMyCart.cart.length;
+      });
+      List.generate(fMyCart.cart.length, (index) {
+        subPrice.add(fMyCart.cart[index].product.price.toInt() *
+            fMyCart.cart[index].count.toInt());
 
-        setState(() {
-          discountProduct = mrpSum.toDouble() - sum.toDouble();
-          storePayAmount = sum.toDouble();
-          storeMrpValue = mrpSum.toDouble();
-          storeDiscount = discountProduct.toDouble();
-          isLoading = true;
-        });
+
+
+        mrpPrice
+            .add(fMyCart.cart[index].product.mrp * fMyCart.cart[index].count);
+      });
+
+      storeMrpPriceBoth = List.generate(fMyCart.cart.length, (index) {
+        return MyTotalInstantPriceMrp(price: fMyCart.cart[index].product.price.toInt() * fMyCart.cart[index].count.toInt(),mrpPrice: fMyCart.cart[index].product.mrp.toInt() * fMyCart.cart[index].count.toInt());
+
+      });
+
+      storeNumber = List.generate(fMyCart.cart.length, (index) {
+        return MyCartStoreNumber(number: fMyCart.cart[index].count);
+      });
+
+      for (num e in subPrice) {
+        sum += e;
       }
-    });
+      for (num e in mrpPrice) {
+        mrpSum += e;
+      }
+
+      discountProduct = mrpSum.toDouble() - sum.toDouble();
+      storePayAmount = sum.toDouble();
+
+      storeMrpValue = mrpSum.toDouble();
+      storeDiscount = discountProduct.toDouble();
+
+      setState(() {
+
+        isLoading = true;
+      });
+    }
+    // });
   }
 
   Timer timer;
@@ -193,317 +217,366 @@ class _AddToCartPageState extends State<AddToCartPage> {
                           children: [
                             Expanded(
                               flex: 0,
-                              child: ListView.builder(
-                                itemCount: fMyCart.cart.length,
-                                shrinkWrap: true,
-                                itemBuilder: (context, index) {
-                                  return Column(
-                                    children: [
-                                      Row(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          SizedBox(
-                                            width: 5,
-                                          ),
-                                          Column(
-                                            children: [
-                                              SizedBox(
-                                                height: 2,
-                                              ),
-                                              Container(
-                                                width: MediaQuery.of(context)
-                                                        .size
-                                                        .width /
-                                                    4,
-                                                height: MediaQuery.of(context)
-                                                        .size
-                                                        .height /
-                                                    9,
-                                                child: Image.network(
-                                                  "${fMyCart.urls.image + '/' + fMyCart.cart[index].product.banner.media}",
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  border: Border.all(
-                                                      color: Colors.grey,
-                                                      width: 0.8),
-                                                  borderRadius:
-                                                      BorderRadius.circular(6),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                          SizedBox(
-                                            width: 10,
-                                          ),
-                                          Container(
-                                            child: Column(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.start,
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
+                              child: Container(
+                                height: MediaQuery.of(context).size.height/2.4,
+                                child: ListView.builder(
+                                  itemCount: fMyCart.cart.length,
+                                  shrinkWrap: true,
+                                  itemBuilder: (context, index) {
+                                    return Column(
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            SizedBox(
+                                              width: 5,
+                                            ),
+                                            Column(
                                               children: [
                                                 SizedBox(
                                                   height: 2,
                                                 ),
-                                                Text(
-                                                    "${fMyCart.cart[index].product.title}",
-                                                    style: GoogleFonts.dmSans(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        letterSpacing: 1.5,
-                                                        fontSize: 13,
-                                                        color: Colors.black)),
-                                                Row(
-                                                  // mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                                  children: [
-                                                    Text(
-                                                      "${fMyCart.cart[index].product.category}",
-                                                      style: GoogleFonts.dmSans(
-                                                          letterSpacing: 1.5,
-                                                          // fontWeight: FontWeight.bold,
-                                                          fontSize: 12,
-                                                          color: Colors.grey),
-                                                    ),
-                                                  ],
-                                                ),
-                                                SizedBox(
-                                                  height: 7,
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    Container(
-                                                      child: Row(
-                                                        children: [
-                                                          GestureDetector(
-                                                              onTap: () async {
-                                                                await ApiServices().decrementProducts(
-                                                                    fMyCart
-                                                                        .cart[
-                                                                            index]
-                                                                        .product
-                                                                        .productId,
-                                                                    1,
-                                                                    context);
-                                                                await ApiServices()
-                                                                    .fetchAddToCartItem(
-                                                                        context);
-                                                                setState(() {});
-                                                                storePayAmount = (storePayAmount -
-                                                                    (fMyCart
-                                                                        .cart[
-                                                                            index]
-                                                                        .product
-                                                                        .price));
-                                                                storeMrpValue =
-                                                                    (storeMrpValue -
-                                                                        fMyCart
-                                                                            .cart[index]
-                                                                            .product
-                                                                            .mrp);
-                                                                storeDiscount = (storeDiscount -
-                                                                    (fMyCart
-                                                                            .cart[
-                                                                                index]
-                                                                            .product
-                                                                            .mrp -
-                                                                        fMyCart
-                                                                            .cart[index]
-                                                                            .product
-                                                                            .price));
-                                                                storeNumber[
-                                                                        index]
-                                                                    .number--;
-                                                              },
-                                                              child: Icon(
-                                                                Icons.remove,
-                                                                size: 20,
-                                                              )),
-                                                          SizedBox(
-                                                            width: 5,
-                                                          ),
-                                                          // _selectedCount == index
-                                                          //     ? Text(
-                                                          //         "${addToCart[index]['cart']}",
-                                                          //         style: TextStyle(
-                                                          //             fontWeight:
-                                                          //                 FontWeight
-                                                          //                     .bold),
-                                                          //       )
-                                                          //     : Text(
-                                                          //         "${addToCart[index]['cart']}",
-                                                          //         style: TextStyle(
-                                                          //             fontWeight:
-                                                          //                 FontWeight
-                                                          //                     .bold),
-                                                          //       ),
-
-                                                          Text(
-                                                            "${storeNumber[index].number}",
-                                                            style: TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold),
-                                                          ),
-
-                                                          SizedBox(
-                                                            width: 5,
-                                                          ),
-                                                          GestureDetector(
-                                                              onTap: () async {
-                                                                await ApiServices().incrementProducts(
-                                                                    fMyCart
-                                                                        .cart[
-                                                                            index]
-                                                                        .product
-                                                                        .productId,
-                                                                    1);
-                                                                ApiServices()
-                                                                    .fetchAddToCartItem(
-                                                                        context);
-                                                                setState(() {});
-                                                                storePayAmount = (storePayAmount +
-                                                                    (fMyCart
-                                                                        .cart[
-                                                                            index]
-                                                                        .product
-                                                                        .price));
-                                                                storeMrpValue =
-                                                                    (storeMrpValue +
-                                                                        fMyCart
-                                                                            .cart[index]
-                                                                            .product
-                                                                            .mrp);
-                                                                storeDiscount = (storeDiscount +
-                                                                    (fMyCart
-                                                                            .cart[
-                                                                                index]
-                                                                            .product
-                                                                            .mrp -
-                                                                        fMyCart
-                                                                            .cart[index]
-                                                                            .product
-                                                                            .price));
-                                                                storeNumber[
-                                                                        index]
-                                                                    .number++;
-                                                              },
-                                                              child: Icon(
-                                                                Icons.add,
-                                                                size: 20,
-                                                              )),
-                                                          SizedBox(
-                                                            width: 3,
-                                                          ),
-                                                        ],
-                                                        mainAxisAlignment:
-                                                            MainAxisAlignment
-                                                                .spaceBetween,
-                                                      ),
-                                                      decoration: BoxDecoration(
-                                                        borderRadius:
-                                                            BorderRadius
-                                                                .circular(3),
-                                                        color: Colors
-                                                            .grey.shade200,
-                                                      ),
-                                                      width: 85,
-                                                      height: 25,
-                                                    ),
-                                                    SizedBox(
-                                                      width: 20,
-                                                    ),
-                                                    Icon(
-                                                      Icons.favorite_outline,
-                                                      size: 22,
-                                                    ),
-                                                    // Spacer(),
-                                                    SizedBox(
-                                                      width: 20,
-                                                    ),
-                                                    Icon(
-                                                      Icons.delete,
-                                                      size: 22,
-                                                    ),
-                                                  ],
-                                                ),
-                                                Spacer(),
-                                                Row(
-                                                  children: [
-                                                    Text(
-                                                      "Rs. ${fMyCart.cart[index].product.price}",
-                                                      style: GoogleFonts.dmSans(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color: Colors.black87,
-                                                          letterSpacing: 0.5,
-                                                          fontSize: 13),
-                                                    ),
-                                                    SizedBox(
-                                                      width: 2,
-                                                    ),
-                                                    Row(
-                                                      mainAxisAlignment:
-                                                          MainAxisAlignment
-                                                              .start,
-                                                      children: [
-                                                        Text(
-                                                          "Rs.",
-                                                          style: GoogleFonts
-                                                              .dmSans(
-                                                                  letterSpacing:
-                                                                      0.5,
-                                                                  color: Colors
-                                                                      .grey,
-                                                                  fontSize: 13),
-                                                        ),
-                                                        Text(
-                                                          "${fMyCart.cart[index].product.mrp.toString()}",
-                                                          style: GoogleFonts.dmSans(
-                                                              decoration:
-                                                                  TextDecoration
-                                                                      .lineThrough,
-                                                              color:
-                                                                  Colors.grey,
-                                                              fontSize: 13),
-                                                        ),
-                                                      ],
-                                                    ),
-                                                    SizedBox(
-                                                      width: 2,
-                                                    ),
-                                                    Text(
-                                                      "${fMyCart.cart[index].product.discountPercentage}% OFF",
-                                                      style: GoogleFonts.dmSans(
-                                                          color:
-                                                              Colors.green[700],
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          fontSize: 13),
-                                                    ),
-                                                  ],
+                                                Container(
+                                                  width: MediaQuery.of(context)
+                                                          .size
+                                                          .width /
+                                                      4,
+                                                  height: MediaQuery.of(context)
+                                                          .size
+                                                          .height /
+                                                      9,
+                                                  child: Image.network(
+                                                    "${fMyCart.urls.image + '/' + fMyCart.cart[index].product.banner.media}",
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    border: Border.all(
+                                                        color: Colors.grey,
+                                                        width: 0.8),
+                                                    borderRadius:
+                                                        BorderRadius.circular(6),
+                                                  ),
                                                 ),
                                               ],
                                             ),
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width /
-                                                1.45,
-                                            height: MediaQuery.of(context)
-                                                    .size
-                                                    .height /
-                                                9,
-                                          ),
-                                        ],
-                                      ),
-                                      SizedBox(
-                                        height: 30,
-                                      ),
-                                    ],
-                                  );
-                                },
+                                            SizedBox(
+                                              width: 10,
+                                            ),
+                                            Container(
+                                              child: Column(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  SizedBox(
+                                                    height: 2,
+                                                  ),
+                                                  Text(
+                                                      "${fMyCart.cart[index].product.title}",
+                                                      style: GoogleFonts.dmSans(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          letterSpacing: 1.5,
+                                                          fontSize: 13,
+                                                          color: Colors.black)),
+                                                  Row(
+                                                    // mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                                    children: [
+                                                      Text(
+                                                        "${fMyCart.cart[index].product.category}",
+                                                        style: GoogleFonts.dmSans(
+                                                            letterSpacing: 1.5,
+                                                            // fontWeight: FontWeight.bold,
+                                                            fontSize: 12,
+                                                            color: Colors.grey),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  SizedBox(
+                                                    height: 7,
+                                                  ),
+                                                  Row(
+                                                    children: [
+                                                      Container(
+                                                        child: Row(
+                                                          children: [
+                                                            GestureDetector(
+                                                                onTap: () async {
+                                                                  await ApiServices().decrementProducts(
+                                                                      fMyCart
+                                                                          .cart[
+                                                                              index]
+                                                                          .product
+                                                                          .productId,
+                                                                      1,
+                                                                      context);
+
+
+                                                                  // fetchAddToCartItem();
+                                                                  setState(() {});
+
+                                                                  storePayAmount = (storePayAmount -
+                                                                      (fMyCart.cart[index].product.price.toInt()));
+                                                                  storeMrpValue =
+                                                                      (storeMrpValue -
+                                                                          fMyCart
+                                                                              .cart[index]
+                                                                              .product
+                                                                              .mrp);
+
+
+
+                                                                  debugPrint(storeTotalPriceChangeable.toString());
+                                                                  storeDiscount = (storeDiscount -
+                                                                      (fMyCart
+                                                                              .cart[
+                                                                                  index]
+                                                                              .product
+                                                                              .mrp -
+                                                                          fMyCart
+                                                                              .cart[index]
+                                                                              .product
+                                                                              .price));
+
+                                                                  storeNumber[
+                                                                          index]
+                                                                      .number--;
+
+                                                                    ApiServices()
+                                                                        .fetchAddToCartItem(
+                                                                        context);
+
+                                                                },
+                                                                child: Icon(
+                                                                  Icons.remove,
+                                                                  size: 20,
+                                                                )),
+                                                            SizedBox(
+                                                              width: 5,
+                                                            ),
+                                                            Text(
+                                                              "${storeNumber[index].number}",
+                                                              style: TextStyle(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .bold),
+                                                            ),
+                                                            SizedBox(
+                                                              width: 5,
+                                                            ),
+                                                            GestureDetector(
+                                                                onTap: () async {
+                                                                  await ApiServices().incrementProducts(
+                                                                      fMyCart
+                                                                          .cart[
+                                                                              index]
+                                                                          .product
+                                                                          .productId,
+                                                                      1);
+                                                                  ApiServices()
+                                                                      .fetchAddToCartItem(
+                                                                          context);
+                                                                  // fetchAddToCartItem();
+                                                                  setState(() {
+
+                                                                  });
+                                                                  storePayAmount = (storePayAmount +
+                                                                      (fMyCart
+                                                                          .cart[
+                                                                              index]
+                                                                          .product
+                                                                          .price));
+                                                                  storeMrpValue =
+                                                                      (storeMrpValue +
+                                                                          fMyCart
+                                                                              .cart[index]
+                                                                              .product
+                                                                              .mrp);
+                                                                  storeDiscount = (storeDiscount +
+                                                                      (fMyCart
+                                                                              .cart[
+                                                                                  index]
+                                                                              .product
+                                                                              .mrp -
+                                                                          fMyCart
+                                                                              .cart[index]
+                                                                              .product
+                                                                              .price));
+                                                                  storeNumber[
+                                                                          index]
+                                                                      .number++;
+
+
+                                                                },
+                                                                child: Icon(
+                                                                  Icons.add,
+                                                                  size: 20,
+                                                                )),
+                                                            SizedBox(
+                                                              width: 3,
+                                                            ),
+                                                          ],
+                                                          mainAxisAlignment:
+                                                              MainAxisAlignment
+                                                                  .spaceBetween,
+                                                        ),
+                                                        decoration: BoxDecoration(
+                                                          borderRadius:
+                                                              BorderRadius
+                                                                  .circular(3),
+                                                          color: Colors
+                                                              .grey.shade200,
+                                                        ),
+                                                        width: 85,
+                                                        height: 25,
+                                                      ),
+                                                      SizedBox(
+                                                        width: 20,
+                                                      ),
+                                                      InkWell(
+                                                        onTap: () {
+                                                          setState(() {
+                                                            if (fMyCart
+                                                                    .cart[index]
+                                                                    .inFavorits ==
+                                                                false) {
+                                                              fMyCart.cart[index]
+                                                                      .inFavorits =
+                                                                  true;
+                                                            } else {
+                                                              fMyCart.cart[index]
+                                                                      .inFavorits =
+                                                                  false;
+                                                            }
+                                                          });
+                                                          ApiServices()
+                                                              .addAndDeleteToFavourite(
+                                                                  fMyCart
+                                                                      .cart[index]
+                                                                      .product
+                                                                      .productId);
+                                                        },
+                                                        child: fMyCart.cart[index]
+                                                                    .inFavorits ==
+                                                                true
+                                                            ? Icon(
+                                                                Icons.favorite,
+                                                                color: Colors.red,
+                                                              )
+                                                            : Icon(
+                                                                Icons
+                                                                    .favorite_border,
+                                                                color:
+                                                                    Colors.black,
+                                                              ),
+                                                      ),
+                                                      // Spacer(),
+                                                      SizedBox(
+                                                        width: 20,
+                                                      ),
+                                                      InkWell(
+                                                        child: Icon(
+                                                          Icons.delete,
+                                                          size: 22,
+                                                        ),
+                                                        onTap: () {
+                                                          setState(() {
+                                                            ApiServices()
+                                                                .deleteAddToCartItem(
+                                                                    context,
+                                                                    fMyCart
+                                                                        .cart[
+                                                                            index]
+                                                                        .product
+                                                                        .productId);
+                                                          });
+                                                          fetchAddToCartItem();
+                                                          ApiServices()
+                                                              .fetchAddToCartItem(
+                                                                  context);
+                                                        },
+                                                      ),
+                                                    ],
+                                                  ),
+                                                  Spacer(),
+                                                  Row(
+                                                    children: [
+                                                      Text(
+                                                        "Rs. ${subPrice[index].toString()}", //subPrice[index].toString()
+                                                        style: GoogleFonts.dmSans(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            color: Colors.black87,
+                                                            letterSpacing: 0.5,
+                                                            fontSize: 13),
+                                                      ),
+                                                      SizedBox(
+                                                        width: 2,
+                                                      ),
+                                                      Row(
+                                                        mainAxisAlignment:
+                                                            MainAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Text(
+                                                            "Rs.",
+                                                            style: GoogleFonts
+                                                                .dmSans(
+                                                                    letterSpacing:
+                                                                        0.5,
+                                                                    color: Colors
+                                                                        .grey,
+                                                                    fontSize: 13),
+                                                          ),
+                                                          Text(
+                                                            "${storeMrpPriceBoth[index].mrpPrice.toInt().toString()}",
+                                                            style: GoogleFonts.dmSans(
+                                                                decoration:
+                                                                    TextDecoration
+                                                                        .lineThrough,
+                                                                color:
+                                                                    Colors.grey,
+                                                                fontSize: 13),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                      SizedBox(
+                                                        width: 2,
+                                                      ),
+                                                      Text(
+                                                        "${fMyCart.cart[index].product.discountPercentage.toInt().toString()}% OFF",
+                                                        style: GoogleFonts.dmSans(
+                                                            color:
+                                                                Colors.green[700],
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 13),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                              width: MediaQuery.of(context)
+                                                      .size
+                                                      .width /
+                                                  1.45,
+                                              height: MediaQuery.of(context)
+                                                      .size
+                                                      .height /
+                                                  9,
+                                            ),
+                                          ],
+                                        ),
+                                        SizedBox(
+                                          height: 30,
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                ),
                               ),
                             ),
                             Divider(
@@ -542,7 +615,7 @@ class _AddToCartPageState extends State<AddToCartPage> {
                                         letterSpacing: 1.5),
                                   ),
                                   Text(
-                                    "$storeMrpValue",
+                                    "${storeMrpValue.toInt().toString()}",
                                     style: GoogleFonts.dmSans(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w400),
@@ -566,7 +639,7 @@ class _AddToCartPageState extends State<AddToCartPage> {
                                         color: Colors.green[700]),
                                   ),
                                   Text(
-                                    "$storeDiscount",
+                                    "${storeDiscount.toInt().toString()}",
                                     style: GoogleFonts.dmSans(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w700,
@@ -589,7 +662,7 @@ class _AddToCartPageState extends State<AddToCartPage> {
                                         letterSpacing: 1.5),
                                   ),
                                   Text(
-                                    "$storePayAmount",
+                                    "${storePayAmount.toInt().toString()}",
                                     style: GoogleFonts.dmSans(
                                         fontSize: 18,
                                         fontWeight: FontWeight.w700),
@@ -598,7 +671,26 @@ class _AddToCartPageState extends State<AddToCartPage> {
                               ),
                             ),
                             SizedBox(
-                              height: 50,
+                              height: 30,
+                            ),
+                            GestureDetector(
+                              onTap: () async {
+                                await ApiServices().confirmOrder();
+                                setState(() {
+                                });
+                                Navigator.of(context).push(MaterialPageRoute(builder: (context) => ConfirmOrderPage(),));
+                              },
+                              child: Container(
+                                height: 45,
+                                alignment: Alignment.center,
+                                margin: EdgeInsets.all(10),
+                                width: MediaQuery.of(context).size.width,
+                                decoration: BoxDecoration(
+                                  color: Colors.redAccent,
+                                  borderRadius: BorderRadius.circular(7),
+                                ),
+                                child: Text("Confirm Order",style: GoogleFonts.dmSans(color: Colors.white,fontSize: 18),),
+                              ),
                             ),
                           ],
                         )
@@ -674,4 +766,9 @@ class MyCartStoreNumber {
   MyCartStoreNumber({this.number});
 }
 
+class MyTotalInstantPriceMrp{
+  int price;
+  int mrpPrice;
 
+  MyTotalInstantPriceMrp({this.price,this.mrpPrice});
+}

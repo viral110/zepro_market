@@ -27,7 +27,7 @@ class MicroProductDetails {
 }
 
 class ResponseMicroDetails {
-  List<Banners> banners;
+  List<BannersMicroDetails> banners;
   bool cartStatus;
   int cartoon;
   String category;
@@ -70,9 +70,9 @@ class ResponseMicroDetails {
 
   ResponseMicroDetails.fromJson(Map<String, dynamic> json) {
     if (json['banners'] != null) {
-      banners = new List<Banners>();
+      banners = new List<BannersMicroDetails>();
       json['banners'].forEach((v) {
-        banners.add(new Banners.fromJson(v));
+        banners.add(new BannersMicroDetails.fromJson(v));
       });
     }
     cartStatus = json['cart_status'];
@@ -117,7 +117,7 @@ class ResponseMicroDetails {
     data['hsn'] = this.hsn;
     data['in_cart'] = this.inCart;
     data['in_favorits'] = this.inFavorits;
-    data['mrp'] = this.mrp.toDouble();
+    data['mrp'] = this.mrp.toInt();
     data['price'] = this.price.toDouble();
     data['product_id'] = this.productId;
     data['status'] = this.status;
@@ -158,17 +158,17 @@ class GalleryOfProduct {
   }
 }
 
-class Banners {
+class BannersMicroDetails {
   int id;
   String media;
   String mediaSection;
   String mediaType;
   int priority;
 
-  Banners(
+  BannersMicroDetails(
       {this.id, this.media, this.mediaSection, this.mediaType, this.priority});
 
-  Banners.fromJson(Map<String, dynamic> json) {
+  BannersMicroDetails.fromJson(Map<String, dynamic> json) {
     id = json['id'];
     media = json['media'];
     mediaSection = json['media_section'];
