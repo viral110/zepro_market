@@ -1,8 +1,9 @@
 class SearchProductModel {
   List<ResponseSearchProduct> response;
   bool status;
+  Urls urls;
 
-  SearchProductModel({this.response, this.status});
+  SearchProductModel({this.response, this.status, this.urls});
 
   SearchProductModel.fromJson(Map<String, dynamic> json) {
     if (json['response'] != null) {
@@ -12,6 +13,7 @@ class SearchProductModel {
       });
     }
     status = json['status'];
+    urls = json['urls'] != null ? new Urls.fromJson(json['urls']) : null;
   }
 
   Map<String, dynamic> toJson() {
@@ -20,6 +22,9 @@ class SearchProductModel {
       data['response'] = this.response.map((v) => v.toJson()).toList();
     }
     data['status'] = this.status;
+    if (this.urls != null) {
+      data['urls'] = this.urls.toJson();
+    }
     return data;
   }
 }
@@ -35,22 +40,31 @@ class ResponseSearchProduct {
   String productId;
   int stock;
   String title;
+  String gst;
+  String hsn;
+  int inCart;
+  bool inFavorits;
 
-  ResponseSearchProduct(
-      {this.banner,
-        this.cartoon,
-        this.category,
-        this.discountPercentage,
-        this.isTrending,
-        this.mrp,
-        this.price,
-        this.productId,
-        this.stock,
-        this.title});
+  ResponseSearchProduct({
+    this.banner,
+    this.cartoon,
+    this.category,
+    this.discountPercentage,
+    this.isTrending,
+    this.mrp,
+    this.price,
+    this.productId,
+    this.stock,
+    this.title,
+    this.gst,
+    this.hsn,
+    this.inCart,
+    this.inFavorits,
+  });
 
   ResponseSearchProduct.fromJson(Map<String, dynamic> json) {
     banner =
-    json['banner'] != null ? new Banner.fromJson(json['banner']) : null;
+        json['banner'] != null ? new Banner.fromJson(json['banner']) : null;
     cartoon = json['cartoon'];
     category = json['category'];
     discountPercentage = json['discount_percentage'];
@@ -60,6 +74,10 @@ class ResponseSearchProduct {
     productId = json['product_id'];
     stock = json['stock'];
     title = json['title'];
+    gst = json['gst'];
+    hsn = json['hsn'];
+    inCart = json['in_cart'];
+    inFavorits = json['in_favorits'];
   }
 
   Map<String, dynamic> toJson() {
@@ -76,10 +94,13 @@ class ResponseSearchProduct {
     data['product_id'] = this.productId;
     data['stock'] = this.stock;
     data['title'] = this.title;
+    data['gst'] = this.gst;
+    data['hsn'] = this.hsn;
+    data['in_cart'] = this.inCart;
+    data['in_favorits'] = this.inFavorits;
     return data;
   }
 }
-
 
 class Banner {
   int id;
@@ -106,6 +127,25 @@ class Banner {
     data['media_section'] = this.mediaSection;
     data['media_type'] = this.mediaType;
     data['priority'] = this.priority;
+    return data;
+  }
+}
+
+class Urls {
+  String image;
+  String video;
+
+  Urls({this.image, this.video});
+
+  Urls.fromJson(Map<String, dynamic> json) {
+    image = json['image'];
+    video = json['video'];
+  }
+
+  Map<String, dynamic> toJson() {
+    final Map<String, dynamic> data = new Map<String, dynamic>();
+    data['image'] = this.image;
+    data['video'] = this.video;
     return data;
   }
 }

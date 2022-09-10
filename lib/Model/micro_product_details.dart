@@ -35,6 +35,7 @@ class ResponseMicroDetails {
   String dimensions;
   double discountPercentage;
   List<GalleryOfProduct> gallery;
+  String gst;
   String hsn;
   int inCart;
   bool inFavorits;
@@ -56,6 +57,7 @@ class ResponseMicroDetails {
       this.dimensions,
       this.discountPercentage,
       this.gallery,
+      this.gst,
       this.hsn,
       this.inCart,
       this.inFavorits,
@@ -87,6 +89,7 @@ class ResponseMicroDetails {
         gallery.add(new GalleryOfProduct.fromJson(v));
       });
     }
+    gst = json['gst'];
     hsn = json['hsn'];
     inCart = json['in_cart'];
     inFavorits = json['in_favorits'];
@@ -114,6 +117,7 @@ class ResponseMicroDetails {
     if (this.gallery != null) {
       data['gallery'] = this.gallery.map((v) => v.toJson()).toList();
     }
+    data['gst'] = this.gst;
     data['hsn'] = this.hsn;
     data['in_cart'] = this.inCart;
     data['in_favorits'] = this.inFavorits;

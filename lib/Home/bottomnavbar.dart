@@ -203,7 +203,8 @@ import 'package:jalaram/product_catalogue/products.dart';
 // }
 
 class BottomNavBar extends StatefulWidget {
-  const BottomNavBar({Key key}) : super(key: key);
+  int index;
+  BottomNavBar({Key key,this.index}) : super(key: key);
 
   @override
   _BottomNavBarState createState() => _BottomNavBarState();
@@ -223,139 +224,222 @@ class _BottomNavBarState extends State<BottomNavBar> {
   GlobalKey<ScaffoldState> drawerKey = GlobalKey<ScaffoldState>();
 
   void _updateIndex(int value) {
+
     setState(() {
       _currentIndex = value;
+      // _currentIndex = widget.index;
       ApiServices().microProducts(context);
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-        key: drawerKey,
-        body: tabsView[_currentIndex],
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
-        floatingActionButton: Padding(
-          padding: const EdgeInsets.all(13.0),
-          child: Card(
-            elevation: 4,
-            child: Container(
-              height: 65,
-              decoration: BoxDecoration(
-                // border: Border.all(width: 1.3),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(10),
-                child: BottomNavigationBar(
-                    elevation: 20,
-                    type: BottomNavigationBarType.fixed,
-                    selectedItemColor: Color.fromRGBO(255, 78, 91, 1),
-                    selectedFontSize: 12,
-                    selectedLabelStyle: GoogleFonts.aBeeZee(
-                      letterSpacing: 1,
-                    ),
-                    backgroundColor: Colors.white,
-                    unselectedItemColor: Colors.black,
-                    currentIndex: _currentIndex,
-                    onTap: _updateIndex,
-                    items: [
-                      BottomNavigationBarItem(
-                        icon: _currentIndex == 0
-                            ? Padding(
-                                padding: const EdgeInsets.only(bottom: 7),
-                                child: Image.asset(
-                                  'assets/new/home.png',
-                                  height: 23,
-                                  width: 23,
-                                ),
-                              )
-                            : Padding(
-                                padding: const EdgeInsets.only(bottom: 7),
-                                child: Image.asset(
-                                  "assets/new/home3.png",
-                                  height: 23,
-                                  width: 23,
-                                  color: Colors.black,
-                                ),
-                              ),
-                        label: "Home",
+    return WillPopScope(
+      onWillPop: () async {
+        if (_currentIndex == 0) {
+          showDilogE(context: context);
+        } else if (_currentIndex == 1 || _currentIndex == 2 || _currentIndex == 3 || _currentIndex == 4) {
+          return Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BottomNavBar(),
+            ),
+          );
+        }
+        return true;
+      },
+      child: Scaffold(
+          key: drawerKey,
+          body: tabsView[_currentIndex],
+          floatingActionButtonLocation:
+              FloatingActionButtonLocation.centerFloat,
+          floatingActionButton: Padding(
+            padding: const EdgeInsets.all(13.0),
+            child: Card(
+              elevation: 4,
+              child: Container(
+                height: 65,
+                decoration: BoxDecoration(
+                  // border: Border.all(width: 1.3),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: BottomNavigationBar(
+                      elevation: 20,
+                      type: BottomNavigationBarType.fixed,
+                      selectedItemColor: Color.fromRGBO(255, 78, 91, 1),
+                      selectedFontSize: 12,
+                      selectedLabelStyle: GoogleFonts.aBeeZee(
+                        letterSpacing: 1,
                       ),
-                      BottomNavigationBarItem(
-                        icon: _currentIndex == 1
-                            ? Padding(
-                                padding: const EdgeInsets.only(bottom: 7),
-                                child: Image.asset(
-                                  "assets/new/Wishlist.png",
-                                  height: 23,
-                                  width: 23,
-                                ),
-                              )
-                            : Padding(
-                                padding: const EdgeInsets.only(bottom: 7),
-                                child: Image.asset(
-                                  "assets/new/Wishlist2.png",
-                                  height: 23,
-                                  width: 23,
-                                  color: Colors.black,
-                                ),
-                              ),
-                        label: "Wishlist",
-                      ),
-                      BottomNavigationBarItem(
-                          icon: _currentIndex == 2
-                              ? Image.asset(
-                                  "assets/new/Product2.png",
-                                  height: 35,
-                                  width: 35,
-                                  fit: BoxFit.fill,
-                                )
-                              : Image.asset(
-                                  "assets/new/Product.png",
-                                  height: 32,
-                                  width: 32,
-                                  fit: BoxFit.fill,
-                                  color: Colors.black,
-                                ),
-                          label: "Products"),
-                      BottomNavigationBarItem(
-                          icon: _currentIndex == 3
+                      backgroundColor: Colors.white,
+                      unselectedItemColor: Colors.black,
+                      currentIndex: _currentIndex,
+                      onTap: _updateIndex,
+                      items: [
+                        BottomNavigationBarItem(
+                          icon: _currentIndex == 0
                               ? Padding(
                                   padding: const EdgeInsets.only(bottom: 7),
                                   child: Image.asset(
-                                    "assets/new/cart4.png",
-                                    height: 27,
-                                    width: 27,
+                                    'assets/new/home.png',
+                                    height: 23,
+                                    width: 23,
                                   ),
                                 )
-                              : Image.asset(
-                                  "assets/new/cart5.png",
-                                  height: 23,
-                                  width: 23,
-                                  color: Colors.black,
+                              : Padding(
+                                  padding: const EdgeInsets.only(bottom: 7),
+                                  child: Image.asset(
+                                    "assets/new/home3.png",
+                                    height: 23,
+                                    width: 23,
+                                    color: Colors.black,
+                                  ),
                                 ),
-                          label: "Cart"),
-                      BottomNavigationBarItem(
-                          icon: _currentIndex == 4
-                              ? Image.asset(
-                                  "assets/new/menu.png",
-                                  height: 27,
-                                  width: 27,
-                                  color: Color.fromRGBO(255, 78, 91, 1),
-                                  fit: BoxFit.fill,
+                          label: "Home",
+                        ),
+                        BottomNavigationBarItem(
+                          icon: _currentIndex == 1
+                              ? Padding(
+                                  padding: const EdgeInsets.only(bottom: 7),
+                                  child: Image.asset(
+                                    "assets/new/Wishlist.png",
+                                    height: 23,
+                                    width: 23,
+                                  ),
                                 )
-                              : Image.asset(
-                                  "assets/new/menu.png",
-                                  height: 27,
-                                  width: 27,
-                                  color: Colors.black,
-                                  fit: BoxFit.fitHeight,
+                              : Padding(
+                                  padding: const EdgeInsets.only(bottom: 7),
+                                  child: Image.asset(
+                                    "assets/new/Wishlist2.png",
+                                    height: 23,
+                                    width: 23,
+                                    color: Colors.black,
+                                  ),
                                 ),
-                          label: "More"),
-                    ]),
+                          label: "Wishlist",
+                        ),
+                        BottomNavigationBarItem(
+                            icon: _currentIndex == 2
+                                ? Image.asset(
+                                    "assets/new/Product2.png",
+                                    height: 35,
+                                    width: 35,
+                                    fit: BoxFit.fill,
+                                  )
+                                : Image.asset(
+                                    "assets/new/Product.png",
+                                    height: 32,
+                                    width: 32,
+                                    fit: BoxFit.fill,
+                                    color: Colors.black,
+                                  ),
+                            label: "Products"),
+                        BottomNavigationBarItem(
+                            icon: _currentIndex == 3
+                                ? Padding(
+                                    padding: const EdgeInsets.only(bottom: 7),
+                                    child: Image.asset(
+                                      "assets/new/cart4.png",
+                                      height: 27,
+                                      width: 27,
+                                    ),
+                                  )
+                                : Image.asset(
+                                    "assets/new/cart5.png",
+                                    height: 23,
+                                    width: 23,
+                                    color: Colors.black,
+                                  ),
+                            label: "Cart"),
+                        BottomNavigationBarItem(
+                            icon: _currentIndex == 4
+                                ? Image.asset(
+                                    "assets/new/menu.png",
+                                    height: 27,
+                                    width: 27,
+                                    color: Color.fromRGBO(255, 78, 91, 1),
+                                    fit: BoxFit.fill,
+                                  )
+                                : Image.asset(
+                                    "assets/new/menu.png",
+                                    height: 27,
+                                    width: 27,
+                                    color: Colors.black,
+                                    fit: BoxFit.fitHeight,
+                                  ),
+                            label: "More"),
+                      ]),
+                ),
               ),
             ),
+          )),
+    );
+  }
+
+  showDilogE({BuildContext context}) {
+    return showDialog(
+      context: context,
+      builder: (context) => Container(
+        width: MediaQuery.of(context).size.width / 1.2,
+        child: AlertDialog(
+          insetPadding: EdgeInsets.all(10),
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            "Are you Sure?",
+            style: GoogleFonts.dmSans(fontSize: 18),
           ),
-        ));
+          content: Padding(
+            padding: const EdgeInsets.only(
+              left: 24,
+              top: 8,
+              bottom: 8,
+            ),
+            child: Text(
+              "Do you want to exit an App",
+              style: GoogleFonts.dmSans(fontSize: 16),
+            ),
+          ),
+          actions: [
+            Container(
+              child: RaisedButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                color: Colors.white,
+                child: Text(
+                  "No",
+                  style:
+                      GoogleFonts.aBeeZee(color: Color.fromRGBO(4, 75, 90, 1)),
+                ),
+              ),
+              decoration: BoxDecoration(
+                border:
+                    Border.all(color: Color.fromRGBO(4, 75, 90, 1), width: 1.5),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              height: 40,
+            ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: RaisedButton(
+                onPressed: () {
+                  SystemNavigator.pop();
+                },
+                child: Text(
+                  "Yes",
+                  style: GoogleFonts.aBeeZee(color: Colors.white),
+                ),
+                color: Color.fromRGBO(4, 75, 90, 1),
+              ),
+              height: 40,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

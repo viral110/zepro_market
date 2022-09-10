@@ -33,7 +33,7 @@ class FetchAddToCartItem {
 
 class Cart {
   int count;
-  bool inFavorits;
+
   String markDatetime;
 
   Product product;
@@ -42,7 +42,7 @@ class Cart {
 
   Cart.fromJson(Map<String, dynamic> json) {
     count = json['count'];
-    inFavorits = json['in_favorits'];
+
     markDatetime = json['mark_datetime'];
     product =
         json['product'] != null ? new Product.fromJson(json['product']) : null;
@@ -51,7 +51,7 @@ class Cart {
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = new Map<String, dynamic>();
     data['count'] = this.count;
-    data['in_favorits'] = this.inFavorits;
+
     data['mark_datetime'] = this.markDatetime;
     if (this.product != null) {
       data['product'] = this.product.toJson();
@@ -69,6 +69,7 @@ class Product {
   double price;
   String productId;
   int stock;
+  bool inFavorits;
   String title;
 
   Product(
@@ -80,6 +81,7 @@ class Product {
       this.price,
       this.productId,
       this.stock,
+        this.inFavorits,
       this.title});
 
   Product.fromJson(Map<String, dynamic> json) {
@@ -92,6 +94,7 @@ class Product {
     price = json['price'];
     productId = json['product_id'];
     stock = json['stock'];
+    inFavorits = json['in_favorits'];
     title = json['title'];
   }
 
@@ -107,6 +110,7 @@ class Product {
     data['price'] = this.price;
     data['product_id'] = this.productId;
     data['stock'] = this.stock;
+    data['in_favorits'] = this.inFavorits;
     data['title'] = this.title;
     return data;
   }

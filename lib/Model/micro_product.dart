@@ -54,6 +54,8 @@ class ResponseMicro {
   double discountPercentage;
   double mrp;
   double price;
+  String gst;
+  String hsn;
   int inCart;
   bool inFavorits;
   String productId;
@@ -66,6 +68,8 @@ class ResponseMicro {
         this.cartoon,
         this.category,
         this.discountPercentage,
+        this.hsn,
+        this.gst,
         this.inCart,
         this.inFavorits,
         this.mrp,
@@ -82,6 +86,8 @@ class ResponseMicro {
     category = json['category'];
     discountPercentage = json['discount_percentage'];
     inCart = json['in_cart'];
+    gst = json['gst'];
+    hsn = json['hsn'];
     inFavorits = json['in_favorits'];
     mrp = json['mrp'];
     price = json['price'];
@@ -101,6 +107,8 @@ class ResponseMicro {
     data['category'] = this.category;
     data['discount_percentage'] = this.discountPercentage.toDouble();
     data['in_cart'] = this.inCart;
+    data['gst'] = this.gst;
+    data['hsn'] = this.hsn;
     data['in_favorits'] = this.inFavorits;
     data['mrp'] = this.mrp.toDouble();
     data['price'] = this.price.toDouble();

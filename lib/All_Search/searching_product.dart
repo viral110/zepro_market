@@ -28,7 +28,7 @@ class _SearchingProductState extends State<SearchingProduct> {
     var decoded = jsonDecode(response.body);
     if (response.statusCode == 200) {
       spm = SearchProductModel.fromJson(decoded);
-
+      print(spm.urls.image);
       setState(() {
         isLoading = true;
       });
@@ -48,7 +48,10 @@ class _SearchingProductState extends State<SearchingProduct> {
                     onTap: () {
                       Navigator.pop(context);
                     },
-                    child: Icon(Icons.arrow_back_ios_rounded)),
+                    child: Icon(
+                      Icons.arrow_back_ios_rounded,
+                      color: Color.fromRGBO(255, 78, 91, 1),
+                    )),
                 Expanded(
                     child: Padding(
                   padding: const EdgeInsets.all(8.0),
@@ -139,9 +142,8 @@ class _SearchingProductState extends State<SearchingProduct> {
                                                   .size
                                                   .height /
                                               9,
-                                          // child: Image.network(
-                                          //   "",
-                                          // ),
+                                          child: Image.network(
+                                              "${spm.urls.image}/${spm.response[index].banner.media}"),
                                           decoration: BoxDecoration(
                                             border: Border.all(
                                                 color: Colors.grey, width: 0.8),
@@ -330,15 +332,18 @@ class _SearchingProductState extends State<SearchingProduct> {
                                               MediaQuery.of(context).size.width,
                                         ),
                                         onTap: () {
-                                          String productId = spm.response[index].productId;
+                                          String productId =
+                                              spm.response[index].productId;
                                           Navigator.of(context)
                                               .push(MaterialPageRoute(
-                                            builder: (context) => ProductDetails(
+                                            builder: (context) =>
+                                                ProductDetails(
                                               productId:
-                                              spm.response[index].productId,
+                                                  spm.response[index].productId,
                                             ),
                                           ));
-                                          ApiServices().microProductDetails(productId, context);
+                                          ApiServices().microProductDetails(
+                                              productId, context);
                                         },
                                       ),
                                       flex: 1,
@@ -357,7 +362,15 @@ class _SearchingProductState extends State<SearchingProduct> {
                           },
                         ),
                       )
-                    : Container()
+                    : Align(
+                        alignment: Alignment.center,
+                        child: Padding(
+                          padding: EdgeInsets.only(top: MediaQuery.of(context).size.height/2.5,),
+                          child: Container(
+                            child: Text("No Product Available"),
+                          ),
+                        ),
+                      )
                 : Container(),
           ],
         ),

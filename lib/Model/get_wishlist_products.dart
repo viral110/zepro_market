@@ -39,6 +39,8 @@ class ResponseGetWishList {
   int inCart;
   double mrp;
   double price;
+  String gst;
+  String hsn;
   String productId;
   int stock;
   String title;
@@ -52,6 +54,8 @@ class ResponseGetWishList {
         this.inCart,
         this.mrp,
         this.price,
+        this.hsn,
+        this.gst,
         this.productId,
         this.stock,
         this.title});
@@ -66,6 +70,8 @@ class ResponseGetWishList {
     inCart = json['in_cart'];
     mrp = json['mrp'];
     price = json['price'];
+    gst = json['gst'];
+    hsn = json['hsn'];
     productId = json['product_id'];
     stock = json['stock'];
     title = json['title'];
@@ -83,6 +89,8 @@ class ResponseGetWishList {
     data['in_cart'] = this.inCart;
     data['mrp'] = this.mrp.toDouble();
     data['price'] = this.price.toDouble();
+    data['gst'] = this.gst;
+    data['hsn'] = this.hsn;
     data['product_id'] = this.productId;
     data['stock'] = this.stock;
     data['title'] = this.title;

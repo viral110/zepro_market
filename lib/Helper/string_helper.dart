@@ -1,4 +1,4 @@
 class StringHelper {
-  static String BASE_URL = "http://128.199.16.80/";
+  static String BASE_URL = "http://139.59.22.201/";
   
 }
