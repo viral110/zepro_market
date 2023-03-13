@@ -1,12 +1,9 @@
-import 'package:animated_bottom_navigation_bar/animated_bottom_navigation_bar.dart';
-import 'package:curved_navigation_bar/curved_navigation_bar.dart';
-import 'package:floating_navbar/floating_navbar.dart';
-import 'package:floating_navbar/floating_navbar_item.dart';
-import 'package:flutter/cupertino.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:jalaram/Connect_API/api.dart';
+
 import 'package:jalaram/Home/homepage.dart';
 import 'package:jalaram/Menu_Drawer/profile.dart';
 import 'package:jalaram/WishList/wishlist.dart';
@@ -204,7 +201,7 @@ import 'package:jalaram/product_catalogue/products.dart';
 
 class BottomNavBar extends StatefulWidget {
   int index;
-  BottomNavBar({Key key,this.index}) : super(key: key);
+  BottomNavBar({Key key, this.index}) : super(key: key);
 
   @override
   _BottomNavBarState createState() => _BottomNavBarState();
@@ -224,11 +221,10 @@ class _BottomNavBarState extends State<BottomNavBar> {
   GlobalKey<ScaffoldState> drawerKey = GlobalKey<ScaffoldState>();
 
   void _updateIndex(int value) {
-
     setState(() {
-      _currentIndex = value;
+      widget.index = value;
       // _currentIndex = widget.index;
-      ApiServices().microProducts(context);
+      // ApiServices().microProducts(context);
     });
   }
 
@@ -238,11 +234,14 @@ class _BottomNavBarState extends State<BottomNavBar> {
       onWillPop: () async {
         if (_currentIndex == 0) {
           showDilogE(context: context);
-        } else if (_currentIndex == 1 || _currentIndex == 2 || _currentIndex == 3 || _currentIndex == 4) {
+        } else if (_currentIndex == 1 ||
+            _currentIndex == 2 ||
+            _currentIndex == 3 ||
+            _currentIndex == 4) {
           return Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => BottomNavBar(),
+              builder: (context) => BottomNavBar(index: 0),
             ),
           );
         }
@@ -250,7 +249,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
       },
       child: Scaffold(
           key: drawerKey,
-          body: tabsView[_currentIndex],
+          body: tabsView[widget.index],
           floatingActionButtonLocation:
               FloatingActionButtonLocation.centerFloat,
           floatingActionButton: Padding(
@@ -275,11 +274,11 @@ class _BottomNavBarState extends State<BottomNavBar> {
                       ),
                       backgroundColor: Colors.white,
                       unselectedItemColor: Colors.black,
-                      currentIndex: _currentIndex,
+                      currentIndex: widget.index,
                       onTap: _updateIndex,
                       items: [
                         BottomNavigationBarItem(
-                          icon: _currentIndex == 0
+                          icon: widget.index == 0
                               ? Padding(
                                   padding: const EdgeInsets.only(bottom: 7),
                                   child: Image.asset(
@@ -300,7 +299,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                           label: "Home",
                         ),
                         BottomNavigationBarItem(
-                          icon: _currentIndex == 1
+                          icon: widget.index == 1
                               ? Padding(
                                   padding: const EdgeInsets.only(bottom: 7),
                                   child: Image.asset(
@@ -321,23 +320,23 @@ class _BottomNavBarState extends State<BottomNavBar> {
                           label: "Wishlist",
                         ),
                         BottomNavigationBarItem(
-                            icon: _currentIndex == 2
+                            icon: widget.index == 2
                                 ? Image.asset(
-                                    "assets/new/Product2.png",
-                                    height: 35,
-                                    width: 35,
-                                    fit: BoxFit.fill,
-                                  )
+                                  "assets/new/Product2.png",
+                                  height: 35,
+                                  width: 35,
+                                  fit: BoxFit.fill,
+                                )
                                 : Image.asset(
-                                    "assets/new/Product.png",
-                                    height: 32,
-                                    width: 32,
-                                    fit: BoxFit.fill,
-                                    color: Colors.black,
-                                  ),
+                                  "assets/new/Product.png",
+                                  height: 32,
+                                  width: 32,
+                                  fit: BoxFit.fill,
+                                  color: Colors.black,
+                                ),
                             label: "Products"),
                         BottomNavigationBarItem(
-                            icon: _currentIndex == 3
+                            icon: widget.index == 3
                                 ? Padding(
                                     padding: const EdgeInsets.only(bottom: 7),
                                     child: Image.asset(
@@ -354,7 +353,7 @@ class _BottomNavBarState extends State<BottomNavBar> {
                                   ),
                             label: "Cart"),
                         BottomNavigationBarItem(
-                            icon: _currentIndex == 4
+                            icon: widget.index == 4
                                 ? Image.asset(
                                     "assets/new/menu.png",
                                     height: 27,
@@ -403,20 +402,23 @@ class _BottomNavBarState extends State<BottomNavBar> {
           ),
           actions: [
             Container(
-              child: RaisedButton(
+              child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.white,
+                ),
                 onPressed: () {
                   Navigator.pop(context);
                 },
-                color: Colors.white,
                 child: Text(
                   "No",
-                  style:
-                      GoogleFonts.aBeeZee(color: Color.fromRGBO(4, 75, 90, 1)),
+                  style: GoogleFonts.aBeeZee(
+                    color: Color.fromRGBO(255, 78, 91, 1),
+                  ),
                 ),
               ),
               decoration: BoxDecoration(
                 border:
-                    Border.all(color: Color.fromRGBO(4, 75, 90, 1), width: 1.5),
+                    Border.all(color: Color.fromRGBO(255, 78, 91, 1), width: 1.5),
                 borderRadius: BorderRadius.circular(5),
               ),
               height: 40,
@@ -425,15 +427,17 @@ class _BottomNavBarState extends State<BottomNavBar> {
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(3),
               ),
-              child: RaisedButton(
+              child: ElevatedButton(
                 onPressed: () {
                   SystemNavigator.pop();
                 },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color.fromRGBO(255, 78, 91, 1),
+                ),
                 child: Text(
                   "Yes",
                   style: GoogleFonts.aBeeZee(color: Colors.white),
                 ),
-                color: Color.fromRGBO(4, 75, 90, 1),
               ),
               height: 40,
             ),

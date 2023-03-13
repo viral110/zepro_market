@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:flutter_phone_direct_caller/flutter_phone_direct_caller.dart';
+
 import 'package:map_launcher/map_launcher.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -284,7 +284,7 @@ class _ContactUsState extends State<ContactUs> {
             ),
             Center(
               child: Text(
-                "Our social preference",
+                "Our social preference".toUpperCase(),
                 style: GoogleFonts.aBeeZee(
                   letterSpacing: 1,
                   fontSize: 18,
@@ -382,39 +382,11 @@ class _ContactUsState extends State<ContactUs> {
             SizedBox(
               height: 5,
             ),
-            Center(
-              child: Text(
-                "Our Developer",
-                style: GoogleFonts.aBeeZee(
-                  letterSpacing: 1,
-                  fontSize: 18,
-                  color: Colors.green[900],
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+            Center(child: Text('4.0.3')),
+            SizedBox(
+              height: 5,
             ),
-            Center(
-              child: Text(
-                "Viral Vegad",
-                style: GoogleFonts.aBeeZee(
-                  letterSpacing: 1,
-                  fontSize: 12,
-                  color: Colors.black,
-                  // fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            Center(
-              child: Text(
-                "viralvegad2001@gmail.com",
-                style: GoogleFonts.aBeeZee(
-                  letterSpacing: 1,
-                  fontSize: 12,
-                  color: Colors.black,
-                  // fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+
             SizedBox(
               height: 10,
             ),

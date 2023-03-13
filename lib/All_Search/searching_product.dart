@@ -1,9 +1,13 @@
 import 'dart:convert';
+import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart';
+import 'package:jalaram/Data_Provider/data_provider.dart';
+import 'package:jalaram/Model/micro_product.dart';
 import 'package:jalaram/Model/searching_product_model.dart';
+import 'package:provider/provider.dart';
 
 import '../Connect_API/api.dart';
 import '../product_catalogue/productdetails.dart';
@@ -16,7 +20,8 @@ class SearchingProduct extends StatefulWidget {
 }
 
 class _SearchingProductState extends State<SearchingProduct> {
-  SearchProductModel spm;
+
+  MicroProduct spm;
 
   bool isLoading = true;
 
@@ -27,13 +32,23 @@ class _SearchingProductState extends State<SearchingProduct> {
     Response response = await ApiServices().searchProducts(context, key);
     var decoded = jsonDecode(response.body);
     if (response.statusCode == 200) {
-      spm = SearchProductModel.fromJson(decoded);
+      spm = MicroProduct.fromJson(decoded);
       print(spm.urls.image);
       setState(() {
         isLoading = true;
       });
     }
     // });
+  }
+
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    // fetchMicroProducts();
+    spm = Provider.of<DataProvider>(context,listen: false).microProducts;
+    print(spm);
   }
 
   @override
@@ -48,62 +63,64 @@ class _SearchingProductState extends State<SearchingProduct> {
                     onTap: () {
                       Navigator.pop(context);
                     },
-                    child: Icon(
-                      Icons.arrow_back_ios_rounded,
-                      color: Color.fromRGBO(255, 78, 91, 1),
+                    child: Padding(
+                      padding: const EdgeInsets.only(left: 8),
+                      child: Icon(
+                        Icons.arrow_back_ios_rounded,
+                        color: Color.fromRGBO(22, 2, 105, 1),
+                      ),
                     )),
                 Expanded(
-                    child: Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: TextFormField(
-                    onChanged: (value) {
-                      setState(() {
-                        fetchSearchingProduct(value);
-                      });
-                    },
-                    decoration: InputDecoration(
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.only(
-                            topRight: Radius.zero,
-                            bottomRight: Radius.zero,
-                            topLeft: Radius.circular(2),
-                            bottomLeft: Radius.circular(2)),
-                        borderSide: BorderSide(
-                          color: Colors.grey[500],
-                          width: 1.1,
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Container(
+                      height: 40,
+                      child: TextField(
+                        onChanged: (value) {
+                          setState(() {
+                            fetchSearchingProduct(value);
+                          });
+                        },
+                        style: GoogleFonts.dmSans(),
+                        decoration: InputDecoration(
+                          contentPadding: EdgeInsets.only(bottom: 10),
+                          enabledBorder: UnderlineInputBorder(
+                            borderRadius: BorderRadius.zero,
+                            borderSide: BorderSide(
+                                color: Color.fromRGBO(22, 2, 105, 1),
+                                width: 1.7),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderRadius: BorderRadius.zero,
+                            borderSide: BorderSide(
+                                color: Color.fromRGBO(22, 2, 105, 1),
+                                width: 1.7),
+                          ),
+                          hintText: "Search",
+                          hintStyle: GoogleFonts.dmSans(
+                              color: Colors.grey.shade500,
+                              fontSize: 15,
+                              letterSpacing: 1),
                         ),
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.only(
-                            topRight: Radius.zero,
-                            bottomRight: Radius.zero,
-                            topLeft: Radius.circular(2),
-                            bottomLeft: Radius.circular(2)),
-                        borderSide:
-                            BorderSide(color: Colors.grey[500], width: 1.1),
-                      ),
-                      hintText: "Search your daily product",
-                      hintStyle: GoogleFonts.dmSans(
-                          color: Colors.grey.shade500,
-                          fontSize: 16,
-                          letterSpacing: 0.5),
-                      prefixIcon: Icon(
-                        Icons.search,
-                        color: Colors.grey.shade500,
-                      ),
-                      hintTextDirection: TextDirection.ltr,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.only(
-                            topRight: Radius.zero,
-                            bottomRight: Radius.zero,
-                            topLeft: Radius.circular(2),
-                            bottomLeft: Radius.circular(2)),
-                        borderSide: BorderSide(color: Colors.white, width: 1.1),
-                      ),
-                      contentPadding: EdgeInsets.all(12),
                     ),
                   ),
-                )),
+                ),
+                Padding(
+                  padding: const EdgeInsets.only(right: 10),
+                  child: InkWell(
+                    onTap: (){
+                      setState(() {
+
+                      });
+                      Navigator.pop(context);
+                    },
+                    child: Icon(
+                      Icons.close,
+                      color: Color.fromRGBO(22, 2, 105, 1),
+                    ),
+                  ),
+                ),
               ],
             ),
             Divider(
@@ -365,7 +382,9 @@ class _SearchingProductState extends State<SearchingProduct> {
                     : Align(
                         alignment: Alignment.center,
                         child: Padding(
-                          padding: EdgeInsets.only(top: MediaQuery.of(context).size.height/2.5,),
+                          padding: EdgeInsets.only(
+                            top: MediaQuery.of(context).size.height / 2.5,
+                          ),
                           child: Container(
                             child: Text("No Product Available"),
                           ),

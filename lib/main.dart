@@ -1,19 +1,19 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:jalaram/Data_Provider/data_provider.dart';
 import 'package:jalaram/Data_Provider/favourite_provider.dart';
-
 import 'package:jalaram/Home/bottomnavbar.dart';
 import 'package:jalaram/Home/homepage.dart';
 import 'package:jalaram/Home/imageslider.dart';
 import 'package:jalaram/Home/notification_page.dart';
 import 'package:jalaram/Register_Form/register.dart';
+import 'package:jalaram/Splash_Screen/internet_connection_page.dart';
 import 'package:jalaram/Splash_Screen/splashscreen.dart';
 
 import 'package:jalaram/login_details/loginwithmobile.dart';
@@ -22,6 +22,7 @@ import 'package:http/http.dart' as http;
 import 'dart:async';
 
 import 'package:provider/provider.dart';
+import 'package:upgrader/upgrader.dart';
 import 'package:workmanager/workmanager.dart';
 
 import 'Connect_API/api.dart';
@@ -69,10 +70,9 @@ Future getNotificationApi() async {
       if (response.statusCode == 200) {
         print(decoded["response"][0]["message"]);
 
-
         lengthOfNotify = decoded["response"].length;
-        message = decoded["response"][lengthOfNotify-1]["message"];
-        for(int i=0;i<=lengthOfNotify;i++){
+        message = decoded["response"][lengthOfNotify - 1]["message"];
+        for (int i = 0; i <= lengthOfNotify; i++) {
           messageOfNotify.add(decoded['response'][i]['message']);
         }
 
@@ -142,11 +142,18 @@ class MyApp extends StatelessWidget {
       providers: [
         ListenableProvider<DataProvider>(create: (_) => DataProvider()),
         // ListenableProvider<FavouriteListProvider>(create: (_) => FavouriteListProvider()),
-        ListenableProvider<StoreListBoolProvider>(create: (_) => StoreListBoolProvider(),),
+        ListenableProvider<StoreListBoolProvider>(
+          create: (_) => StoreListBoolProvider(),
+        ),
       ],
       child: MaterialApp(
-        title: 'Flutter Demo',
-        home: SplashScreen(),
+        title: 'Deluxe',
+        home: Scaffold(
+          body: UpgradeAlert(
+
+            child: InternetConnectionPage(isSplash: true),
+          ),
+        ),
       ),
     );
   }

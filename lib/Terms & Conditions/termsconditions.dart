@@ -9,6 +9,7 @@ class TermsConditions extends StatefulWidget {
 }
 
 class _TermsConditionsState extends State<TermsConditions> {
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -48,33 +49,33 @@ class _TermsConditionsState extends State<TermsConditions> {
             padding: const EdgeInsets.all(10.0),
             child: Text(
               '''
-We reserve the right to modify or terminate the services for any reason,without notice at any time.Not all Services and features are Available Is every jurisdiction and we are under no obligation to make any services or features available in any jurisdiction. 
+★ We reserve the right to modify or terminate the services for any reason, without notice at any time. Not all Services and features are Available Is every jurisdiction and we are under no obligation to make any services or features available in any jurisdiction. 
 
-We reserve the right to refuse service to anyone for any reason at any time.
+★ We reserve the right to refuse service to anyone for any reason at any time.
 
-Information for out of surat customers : Whenever you receive a parcel,when opening the parcel,the parcel made videos with 360 videos,If the Video is not made,the missing item claim will not be accepted.
+★ Information for out of surat customers : Whenever you receive a parcel, when opening the parcel, the parcel made videos with 360 videos, If the Video is not made, the missing item claim will not be accepted.
 
-all video's are just for reference only.
+★ All video's are just for reference only.
 
-no any color choice available in any products.
+★ No any color choice available in any products.
 
-you will get product color as per available stock.
+★ No Return/ No Refund / No Replacement
 
-there is no any Guaranty/Warranty available in any products.
+★ You will get product color as per available stock.
 
-we have no any branded products.
+★ There is no any Guaranty/Warranty available in any products.
 
-we are not responsible for any damage because of transport after delivered.
+★ We don’t have any branded products.
 
-Minimum order amount for Customers from Surat is rs.50
+★ We are not responsible for any damage because of transport after delivered.
 
-Verbal or written abuse of any kind(including threats of abuse or retribution) of any Quick mart custmore,Quick mart employee,member or officer will result in immediate service closed.
+★ Minimum order amount for Customers from Surat is rs.50
 
-Pay attention "Local seller", check the goods thoroughly,later the goods we are not accepting return or replacment of any products.
+★ Pay attention "Local seller", check the goods thoroughly, later the goods we are not accepting return or replacement of any products.
 
-Customers have the option of self pick-up of the orders from the Quick mart app.quick mart does not provide delivery services in surat.
+★ Customers have the option of self pick-up of the orders from the Deluxe Ecommerce app. We are not provide delivery services in surat.
 
-minimum order  amount for out of surat customers is rs.2000
+★ Minimum order  amount for out of Surat customers is rs.1000
             ''',
               style: GoogleFonts.dmSans(fontSize: 13.5, letterSpacing: 1),
               textAlign: TextAlign.left,

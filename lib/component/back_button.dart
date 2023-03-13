@@ -34,3 +34,27 @@ class BackButtonCustom extends StatelessWidget {
     );
   }
 }
+
+
+Color mainColor = Color.fromRGBO(4, 75, 90, 1);
+
+
+
+Future<void> openAndCloseLoadingDialog({BuildContext context}) async {
+  showDialog(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => WillPopScope(
+      onWillPop: () async => false,
+      child: const Center(
+        child: SizedBox(
+          width: 60,
+          height: 60,
+          child: CircularProgressIndicator(
+            strokeWidth: 5,
+          ),
+        ),
+      ),
+    ),
+  );
+}

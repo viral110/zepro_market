@@ -3,6 +3,7 @@ import 'package:jalaram/Model/decrement_product_model.dart';
 import 'package:jalaram/Model/favourite_with_id.dart';
 import 'package:jalaram/Model/fetch_cart_item_model.dart';
 import 'package:jalaram/Model/fetch_order_id.dart';
+import 'package:jalaram/Model/get_current_order_details_model.dart';
 import 'package:jalaram/Model/get_current_order_his_model.dart';
 import 'package:jalaram/Model/get_feed_back_user.dart';
 import 'package:jalaram/Model/get_profile_image.dart';
@@ -41,6 +42,7 @@ class DataProvider extends ChangeNotifier {
   MicroProduct searchProductModel;
   FetchOrderId orderId;
   GetCurrentOrderHistory getCurrentOrderHistory;
+  OrderDetailsModel orderDetailsModel;
   NotificationModel notificationModel;
   RegisterAuth registerAuth;
   GetFeedBack getFeedBack;
@@ -62,6 +64,11 @@ class DataProvider extends ChangeNotifier {
 
   void getCurrentOrderProvider(GetCurrentOrderHistory gcoh){
     getCurrentOrderHistory = gcoh;
+    notifyListeners();
+  }
+
+  void getOrderDetails(OrderDetailsModel odm){
+    orderDetailsModel = odm;
     notifyListeners();
   }
 

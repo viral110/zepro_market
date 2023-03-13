@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:get_storage/get_storage.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart';
 import 'package:jalaram/Connect_API/api.dart';
@@ -10,12 +11,20 @@ import 'package:jalaram/Home/bottomnavbar.dart';
 import 'package:jalaram/Model/fetch_cart_item_model.dart';
 import 'package:collection/collection.dart';
 import 'package:jalaram/Model/fetch_order_id.dart';
+import 'package:jalaram/Register_Form/register.dart';
 import 'package:jalaram/add_to_cart_part/confirm_order.dart';
 import 'package:jalaram/product_catalogue/products.dart';
 import 'package:provider/provider.dart';
 
 class AddToCartPage extends StatefulWidget {
-  const AddToCartPage({
+  bool isActiveBack;
+  String productId;
+  VoidCallback productDetailFunc;
+
+  AddToCartPage({
+    this.isActiveBack,
+    this.productId,
+    this.productDetailFunc,
     Key key,
   }) : super(key: key);
 
@@ -34,6 +43,8 @@ class _AddToCartPageState extends State<AddToCartPage> {
   List<MyCartStoreNumber> storeNumber = [];
 
   List<MyTotalInstantPriceMrp> storeMrpPriceBoth = [];
+
+  List<bool> isFavouriteBtn = [];
 
   num storePayAmount = 0;
   num storeDiscount = 0;
@@ -69,11 +80,10 @@ class _AddToCartPageState extends State<AddToCartPage> {
 
   fetchPriceWithProvider() async {
     List.generate(fMyCart.cart.length, (index) {
-      subPrice.add(fMyCart.cart[index].product.price *
-          fMyCart.cart[index].count);
+      subPrice
+          .add(fMyCart.cart[index].product.price * fMyCart.cart[index].count);
 
-      mrpPrice
-          .add(fMyCart.cart[index].product.mrp * fMyCart.cart[index].count);
+      mrpPrice.add(fMyCart.cart[index].product.mrp * fMyCart.cart[index].count);
     });
     for (num e in subPrice) {
       sum += e;
@@ -84,28 +94,27 @@ class _AddToCartPageState extends State<AddToCartPage> {
     storePayAmount = sum.toDouble();
     discountProduct = mrpSum.toDouble() - sum.toDouble();
 
-
     storeMrpValue = mrpSum.toDouble();
     storeDiscount = discountProduct.toDouble();
   }
 
   fetchAddToCartItem() async {
     // await Future.delayed(Duration(milliseconds: 500), () async {
-    Response response = await ApiServices().fetchAddToCartItem(context);
+    final response = await ApiServices().fetchAddToCartItem(context);
     var decoded = jsonDecode(response.body);
 
     if (response.statusCode == 200) {
       fMyCart = FetchAddToCartItem.fromJson(decoded);
-      Fluttertoast.showToast(msg: "Fetch Add to Cart");
+      // Fluttertoast.showToast(msg: "Fetch Add to Cart");
 
       setState(() {
         storeTotalItem = fMyCart.cart.length;
       });
 
-
       storeMrpPriceBoth = List.generate(fMyCart.cart.length, (index) {
+        isFavouriteBtn.add(false);
         return MyTotalInstantPriceMrp(
-            price: fMyCart.cart[index].product.price.toInt() *
+            price: fMyCart.cart[index].product.price *
                 fMyCart.cart[index].count.toInt(),
             mrpPrice: fMyCart.cart[index].product.mrp.toInt() *
                 fMyCart.cart[index].count.toInt());
@@ -118,7 +127,6 @@ class _AddToCartPageState extends State<AddToCartPage> {
       fetchPriceWithProvider();
 
       setState(() {
-
         isLoading = true;
       });
     }
@@ -132,7 +140,7 @@ class _AddToCartPageState extends State<AddToCartPage> {
   @override
   void initState() {
     fetchAddToCartItem();
-    fetchPriceWithProvider();
+
     // timer = Timer(Duration(seconds: 5), ()=>fetchAddToCartItem());
     super.initState();
   }
@@ -151,18 +159,51 @@ class _AddToCartPageState extends State<AddToCartPage> {
             Padding(
               padding: const EdgeInsets.all(10.0),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    width: 3,
-                  ),
+                  widget.isActiveBack == true
+                      ? InkWell(
+                          onTap: () async {
+                            fetchAddToCartItem();
+                            widget.productDetailFunc();
+                            Navigator.pop(context);
+                          },
+                          child: Row(
+                            children: [
+                              Icon(
+                                Icons.arrow_back_ios,
+                                color: Color.fromRGBO(255, 78, 91, 1),
+                              ),
+                              Text(
+                                "Back",
+                                style: GoogleFonts.dmSans(
+                                  color: Color.fromRGBO(255, 78, 91, 1),
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 18,
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : Container(),
+                  widget.isActiveBack == true ? Spacer() : Container(),
+                  widget.isActiveBack == true
+                      ? Container()
+                      : SizedBox(
+                          width: 3,
+                        ),
                   Text(
                     "My Cart",
-                    style: GoogleFonts.aBeeZee(
+                    style: GoogleFonts.dmSans(
                         color: Color.fromRGBO(255, 78, 91, 1),
                         fontWeight: FontWeight.bold,
                         fontSize: 20,
                         letterSpacing: 2),
                   ),
+                  Padding(
+                      padding: EdgeInsets.only(
+                          left: MediaQuery.of(context).size.width / 2.8))
                 ],
               ),
             ),
@@ -214,14 +255,20 @@ class _AddToCartPageState extends State<AddToCartPage> {
                             padding: const EdgeInsets.only(left: 20, right: 20),
                             child: Container(
                                 height: 50,
-                                child: RaisedButton(
-                                  color: Color.fromRGBO(255, 78, 91, 1),
+                                child: ElevatedButton(
+                                  style: ButtonStyle(
+                                      backgroundColor:
+                                          MaterialStateProperty.all(
+                                    Color.fromRGBO(255, 78, 91, 1),
+                                  )),
                                   onPressed: () {
-                                    // Navigator.push(
-                                    //     context,
-                                    //     MaterialPageRoute(
-                                    //       builder: (context) => Products(),
-                                    //     ));
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) => BottomNavBar(
+                                            index: 2,
+                                          ),
+                                        ));
                                   },
                                   child: Text(
                                     "Shop Now",
@@ -235,23 +282,13 @@ class _AddToCartPageState extends State<AddToCartPage> {
                         ],
                       )
                     : Expanded(
-                        child: Column(
-                          children: [
-                            Container(
-                              height: fMyCart.cart.length == 2
-                                  ? MediaQuery.of(context).size.height / 3.5
-                                  : fMyCart.cart.length == 1
-                                      ? MediaQuery.of(context).size.height / 8
-                                      : MediaQuery.of(context).size.height /
-                                          2.28,
-                              child: ListView.builder(
+                        child: SingleChildScrollView(
+                          child: Column(
+                            children: [
+                              ListView.builder(
                                 itemCount: fMyCart.cart.length,
                                 shrinkWrap: true,
-                                physics: fMyCart.cart.length == 3 ||
-                                        fMyCart.cart.length == 1 ||
-                                        fMyCart.cart.length == 2
-                                    ? NeverScrollableScrollPhysics()
-                                    : AlwaysScrollableScrollPhysics(),
+                                physics: NeverScrollableScrollPhysics(),
                                 itemBuilder: (context, index) {
                                   return Column(
                                     children: [
@@ -295,6 +332,14 @@ class _AddToCartPageState extends State<AddToCartPage> {
                                             width: 10,
                                           ),
                                           Container(
+                                            width: MediaQuery.of(context)
+                                                    .size
+                                                    .width /
+                                                1.45,
+                                            height: MediaQuery.of(context)
+                                                    .size
+                                                    .height /
+                                                7.6,
                                             child: Column(
                                               mainAxisAlignment:
                                                   MainAxisAlignment.start,
@@ -383,10 +428,16 @@ class _AddToCartPageState extends State<AddToCartPage> {
                                                                     .fetchAddToCartItem(
                                                                         context);
                                                               },
-                                                              child: Icon(
-                                                                Icons.remove,
-                                                                size: 20,
-                                                              )),
+                                                              child: storeNumber[
+                                                                              index]
+                                                                          .number ==
+                                                                      1
+                                                                  ? Container()
+                                                                  : Icon(
+                                                                      Icons
+                                                                          .remove,
+                                                                      size: 20,
+                                                                    )),
                                                           SizedBox(
                                                             width: 5,
                                                           ),
@@ -400,55 +451,57 @@ class _AddToCartPageState extends State<AddToCartPage> {
                                                           SizedBox(
                                                             width: 5,
                                                           ),
-                                                          GestureDetector(
-                                                              onTap: () async {
-                                                                await ApiServices().incrementProducts(
-                                                                    fMyCart
-                                                                        .cart[
-                                                                            index]
-                                                                        .product
-                                                                        .productId,
-                                                                    1);
-                                                                ApiServices()
-                                                                    .fetchAddToCartItem(
-                                                                        context);
-                                                                // fetchAddToCartItem();
-                                                                setState(() {});
-                                                                storePayAmount = (storePayAmount +
-                                                                    (fMyCart
-                                                                        .cart[
-                                                                            index]
-                                                                        .product
-                                                                        .price));
-                                                                storeMrpValue =
-                                                                    (storeMrpValue +
+                                                          fMyCart
+                                                                      .cart[
+                                                                          index]
+                                                                      .product
+                                                                      .stock <=
+                                                                  storeNumber[
+                                                                          index]
+                                                                      .number
+                                                              ? Container()
+                                                              : GestureDetector(
+                                                                  onTap:
+                                                                      () async {
+                                                                    await ApiServices().incrementProducts(
+                                                                        fMyCart
+                                                                            .cart[index]
+                                                                            .product
+                                                                            .productId,
+                                                                        1);
+                                                                    ApiServices()
+                                                                        .fetchAddToCartItem(
+                                                                            context);
+                                                                    // fetchAddToCartItem();
+                                                                    setState(
+                                                                        () {});
+                                                                    storePayAmount = (storePayAmount +
+                                                                        (fMyCart
+                                                                            .cart[index]
+                                                                            .product
+                                                                            .price));
+                                                                    storeMrpValue = (storeMrpValue +
                                                                         fMyCart
                                                                             .cart[index]
                                                                             .product
                                                                             .mrp);
-                                                                storeDiscount = (storeDiscount +
-                                                                    (fMyCart
-                                                                            .cart[
-                                                                                index]
-                                                                            .product
-                                                                            .mrp -
-                                                                        fMyCart
-                                                                            .cart[index]
-                                                                            .product
-                                                                            .price));
-                                                                storeNumber[
-                                                                        index]
-                                                                    .number++;
-                                                                // await ApiServices().fetchAddToCartItem(context);
-                                                                // fetchAddToCartItem();
-                                                                setState(() {
-
-                                                                });
-                                                              },
-                                                              child: Icon(
-                                                                Icons.add,
-                                                                size: 20,
-                                                              )),
+                                                                    storeDiscount =
+                                                                        (storeDiscount +
+                                                                            (fMyCart.cart[index].product.mrp -
+                                                                                fMyCart.cart[index].product.price));
+                                                                    storeNumber[
+                                                                            index]
+                                                                        .number++;
+                                                                    // await ApiServices().fetchAddToCartItem(context);
+                                                                    // fetchAddToCartItem();
+                                                                    setState(
+                                                                        () {});
+                                                                  },
+                                                                  child: Icon(
+                                                                    Icons.add,
+                                                                    size: 20,
+                                                                  ),
+                                                                ),
                                                           SizedBox(
                                                             width: 3,
                                                           ),
@@ -470,27 +523,85 @@ class _AddToCartPageState extends State<AddToCartPage> {
                                                     SizedBox(
                                                       width: 20,
                                                     ),
+
                                                     InkWell(
-                                                      child: fMyCart.cart[index].product.inFavorits == true
+                                                      child: fMyCart
+                                                                  .cart[index]
+                                                                  .product
+                                                                  .inFavorits ==
+                                                              true
                                                           ? Icon(
-                                                        Icons.favorite,
-                                                        color: Colors.red,
-                                                      )
-                                                          : Icon(
-                                                        Icons.favorite_border,
-                                                        color: Colors.black,
-                                                      ),
+                                                              Icons.favorite,
+                                                              color: Colors.red,
+                                                            )
+                                                          : isFavouriteBtn[
+                                                                      index] ==
+                                                                  false
+                                                              ? Icon(
+                                                                  Icons
+                                                                      .favorite_border,
+                                                                  color: Colors
+                                                                      .black,
+                                                                )
+                                                              : SizedBox(
+                                                                  height: 20,
+                                                                  width: 20,
+                                                                  child:
+                                                                      CircularProgressIndicator(
+                                                                    strokeWidth:
+                                                                        3,
+                                                                    color: Colors
+                                                                        .grey
+                                                                        .shade800,
+                                                                    backgroundColor:
+                                                                        Colors
+                                                                            .grey
+                                                                            .shade400,
+                                                                  ),
+                                                                ),
                                                       onTap: () async {
                                                         setState(() {
-                                                          if (fMyCart.cart[index].product.inFavorits ==
+                                                          isFavouriteBtn[
+                                                              index] = true;
+                                                        });
+                                                        setState(() {
+                                                          if (fMyCart
+                                                                  .cart[index]
+                                                                  .product
+                                                                  .inFavorits ==
                                                               false) {
-                                                            fMyCart.cart[index].product.inFavorits = true;
+                                                            Future.delayed(
+                                                              Duration(
+                                                                  seconds: 1),
+                                                              () {
+                                                                setState(() {
+                                                                  fMyCart
+                                                                      .cart[
+                                                                          index]
+                                                                      .product
+                                                                      .inFavorits = true;
+                                                                  ApiServices().addAndDeleteToFavourite(fMyCart
+                                                                      .cart[
+                                                                          index]
+                                                                      .product
+                                                                      .productId);
+                                                                });
+                                                                setState(() {
+                                                                  isFavouriteBtn[
+                                                                          index] =
+                                                                      false;
+                                                                });
+                                                              },
+                                                            );
                                                           } else {
-                                                            fMyCart.cart[index].product.inFavorits = false;
+                                                            isFavouriteBtn[
+                                                                index] = false;
+                                                            showDilogE(
+                                                                context:
+                                                                    context,
+                                                                index: index);
                                                           }
                                                         });
-                                                        ApiServices().addAndDeleteToFavourite(
-                                                            fMyCart.cart[index].product.productId);
                                                       },
                                                     ),
                                                     // Spacer(),
@@ -503,25 +614,9 @@ class _AddToCartPageState extends State<AddToCartPage> {
                                                         size: 22,
                                                       ),
                                                       onTap: () async {
-                                                        await ApiServices()
-                                                            .deleteAddToCartItem(
-                                                                context,
-                                                                fMyCart
-                                                                    .cart[index]
-                                                                    .product
-                                                                    .productId);
-                                                        setState(() {
-                                                          // storePayAmount = 0;
-                                                          storeMrpValue = storeMrpValue - (fMyCart.cart[index].count * fMyCart.cart[index].product.mrp);
-                                                          storePayAmount = storePayAmount-(fMyCart.cart[index].count*fMyCart.cart[index].product.price);
-                                                          storeDiscount = storeMrpValue - storePayAmount;
-
-                                                          subPrice = null;
-                                                          mrpPrice = null;
-                                                          fetchAddToCartItem();
-
-
-                                                        });
+                                                        showDilogForMyCart(
+                                                            context: context,
+                                                            index: index);
                                                       },
                                                     ),
                                                   ],
@@ -529,16 +624,59 @@ class _AddToCartPageState extends State<AddToCartPage> {
                                                 Spacer(),
                                                 Row(
                                                   children: [
-                                                    Text(
-                                                      "Rs. ${Provider.of<DataProvider>(context).fetchAddToCartItem.cart[index].count.toInt() * Provider.of<DataProvider>(context).fetchAddToCartItem.cart[index].product.price.toInt()}",
-                                                      // "Rs. ${subPrice[index].toString()}", //subPrice[index].toString(),
-                                                      style: GoogleFonts.dmSans(
-                                                          fontWeight:
-                                                              FontWeight.bold,
-                                                          color: Colors.black87,
-                                                          letterSpacing: 0.5,
-                                                          fontSize: 13),
-                                                    ),
+                                                    Provider.of<DataProvider>(
+                                                                        context,
+                                                                        listen:
+                                                                            false)
+                                                                    .fetchAddToCartItem ==
+                                                                null &&
+                                                            Provider.of<DataProvider>(
+                                                                    context,
+                                                                    listen:
+                                                                        false)
+                                                                .fetchAddToCartItem
+                                                                .cart
+                                                                .isEmpty
+                                                        ? SizedBox()
+                                                        : (Provider.of<DataProvider>(
+                                                                            context,
+                                                                            listen:
+                                                                                false)
+                                                                        .fetchAddToCartItem
+                                                                        .cart[
+                                                                            index]
+                                                                        .product
+                                                                        .price %
+                                                                    1) ==
+                                                                0
+                                                            ? Text(
+                                                                "Rs. ${Provider.of<DataProvider>(context, listen: false).fetchAddToCartItem.cart[index].count.toInt() * Provider.of<DataProvider>(context, listen: false).fetchAddToCartItem.cart[index].product.price.toInt()}",
+                                                                // "Rs. ${subPrice[index].toString()}", //subPrice[index].toString(),
+                                                                style: GoogleFonts.dmSans(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                    color: Colors
+                                                                        .black87,
+                                                                    letterSpacing:
+                                                                        0.5,
+                                                                    fontSize:
+                                                                        13),
+                                                              )
+                                                            : Text(
+                                                                "Rs. ${Provider.of<DataProvider>(context, listen: false).fetchAddToCartItem.cart[index].count.toInt() * Provider.of<DataProvider>(context, listen: false).fetchAddToCartItem.cart[index].product.price}",
+                                                                // "Rs. ${subPrice[index].toString()}", //subPrice[index].toString(),
+                                                                style: GoogleFonts.dmSans(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                    color: Colors
+                                                                        .black87,
+                                                                    letterSpacing:
+                                                                        0.5,
+                                                                    fontSize:
+                                                                        13),
+                                                              ),
                                                     SizedBox(
                                                       width: 2,
                                                     ),
@@ -585,208 +723,391 @@ class _AddToCartPageState extends State<AddToCartPage> {
                                                 ),
                                               ],
                                             ),
-                                            width: MediaQuery.of(context)
-                                                    .size
-                                                    .width /
-                                                1.45,
-                                            height: MediaQuery.of(context)
-                                                    .size
-                                                    .height /
-                                                9,
                                           ),
                                         ],
                                       ),
                                       SizedBox(
-                                        height: 30,
+                                        height: 8,
+                                      ),
+                                      fMyCart.cart.length == index + 1
+                                          ? Container()
+                                          : Padding(
+                                              padding: const EdgeInsets.only(
+                                                left: 8,
+                                                right: 8,
+                                              ),
+                                              child: Divider(
+                                                height: 2,
+                                                thickness: 0.9,
+                                              ),
+                                            ),
+                                      SizedBox(
+                                        height: 8,
                                       ),
                                     ],
                                   );
                                 },
                               ),
-                            ),
-                            Divider(
-                              thickness: 6,
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 7, right: 7, bottom: 7, top: 7),
-                              child: Align(
-                                alignment: Alignment.topLeft,
-                                child: Text(
-                                  "Price Breakup",
-                                  style: GoogleFonts.dmSans(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.5),
+                              Divider(
+                                thickness: 6,
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    left: 7, right: 7, bottom: 7, top: 7),
+                                child: Align(
+                                  alignment: Alignment.topLeft,
+                                  child: Text(
+                                    "Price Breakup",
+                                    style: GoogleFonts.dmSans(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 1.5),
+                                  ),
                                 ),
                               ),
-                            ),
-                            Divider(),
-                            SizedBox(
-                              height: 10,
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 7, right: 7, bottom: 5),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "MRP($storeTotalItem item) ",
-                                    style: GoogleFonts.dmSans(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w400,
-                                        letterSpacing: 1.5),
-                                  ),
-                                  Text(
-                                    "${storeMrpValue.toInt().toString()}",
-                                    style: GoogleFonts.dmSans(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w400),
-                                  ),
-                                ],
+                              Divider(),
+                              SizedBox(
+                                height: 10,
                               ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(
-                                  left: 7, right: 7, bottom: 5),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "Discount",
-                                    style: GoogleFonts.dmSans(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 1.5,
-                                        color: Colors.green[700]),
-                                  ),
-                                  Text(
-                                    "${storeDiscount.toInt().toString()}",
-                                    style: GoogleFonts.dmSans(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700,
-                                        color: Colors.green[700]),
-                                  ),
-                                ],
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    left: 7, right: 7, bottom: 5),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      "MRP($storeTotalItem item) ",
+                                      style: GoogleFonts.dmSans(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w400,
+                                          letterSpacing: 1.5),
+                                    ),
+                                    Text(
+                                      "${storeMrpValue.toInt().toString()}",
+                                      style: GoogleFonts.dmSans(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w400),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(left: 7, right: 7),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    "Payable Amount",
-                                    style: GoogleFonts.dmSans(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                        letterSpacing: 1.5),
-                                  ),
-                                  Text(
-                                    "${storePayAmount.toInt().toString()}",
-                                    style: GoogleFonts.dmSans(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.w700),
-                                  ),
-                                ],
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                    left: 7, right: 7, bottom: 5),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      "Discount",
+                                      style: GoogleFonts.dmSans(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 1.5,
+                                          color: Colors.green[700]),
+                                    ),
+                                    Text(
+                                      "-${storeDiscount.toInt().toString()}",
+                                      style: GoogleFonts.dmSans(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.green[700]),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            SizedBox(
-                              height: 30,
-                            ),
-                            GestureDetector(
-                              onTap: () async {
-                                await ApiServices().confirmOrder(context);
+                              Padding(
+                                padding:
+                                    const EdgeInsets.only(left: 7, right: 7),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      "Payable Amount",
+                                      style: GoogleFonts.dmSans(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 1.5),
+                                    ),
+                                    (storePayAmount % 1) == 0
+                                        ? Text(
+                                            "${storePayAmount.toInt().toString()}",
+                                            style: GoogleFonts.dmSans(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w700),
+                                          )
+                                        : Text(
+                                            "${storePayAmount.toString()}",
+                                            style: GoogleFonts.dmSans(
+                                                fontSize: 15,
+                                                fontWeight: FontWeight.w700),
+                                          ),
+                                  ],
+                                ),
+                              ),
+                              SizedBox(
+                                height: 30,
+                              ),
+                              GestureDetector(
+                                onTap: () async {
+                                  await ApiServices().registerAuthGet(context);
+                                  print(Provider.of<DataProvider>(context,
+                                      listen: false)
+                                      .registerAuth
+                                      .address);
+                                  if (Provider.of<DataProvider>(context,
+                                              listen: false)
+                                          .registerAuth
+                                          .address ==
+                                      "Surat") {
+                                    if (storePayAmount <= 50) {
+                                      showDialogForErrorPopUp(
+                                          context: context, value: "50");
+                                    } else {
+                                      await ApiServices().confirmOrder(context);
 
-                                setState(() {});
-                              },
-                              child: Container(
-                                height: 45,
-                                alignment: Alignment.center,
-                                margin: EdgeInsets.all(10),
-                                width: MediaQuery.of(context).size.width,
-                                decoration: BoxDecoration(
-                                  color: Colors.redAccent,
-                                  borderRadius: BorderRadius.circular(7),
-                                ),
-                                child: Text(
-                                  "Confirm Order",
-                                  style: GoogleFonts.dmSans(
-                                      color: Colors.white, fontSize: 18),
+                                      setState(() {});
+                                    }
+                                  } else {
+                                    if (storePayAmount <= 1000) {
+                                      showDialogForErrorPopUp(
+                                          context: context, value: "1000");
+                                    } else {
+                                      await ApiServices().confirmOrder(context);
+
+                                      setState(() {});
+                                    }
+                                  }
+                                },
+                                child: Container(
+                                  height: 45,
+                                  alignment: Alignment.center,
+                                  margin: EdgeInsets.all(10),
+                                  width: MediaQuery.of(context).size.width,
+                                  decoration: BoxDecoration(
+                                    color: Colors.redAccent,
+                                    borderRadius: BorderRadius.circular(7),
+                                  ),
+                                  child: Text(
+                                    "Confirm Order",
+                                    style: GoogleFonts.dmSans(
+                                        color: Colors.white, fontSize: 18),
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
+                              SizedBox(
+                                height: 100,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
+
+          ],
+        ),
+      ),
+    );
+  }
+
+  showDialogForErrorPopUp({BuildContext context, String value}) {
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.info,
+              color: Colors.redAccent,
+              size: 25,
+            ),
             SizedBox(
-              height: MediaQuery.of(context).size.height / 8,
+              height: 25,
+            ),
+            Text(
+              "You must have Total Amount more than Rs.$value to successfully place your order",
+              style: GoogleFonts.dmSans(
+                fontSize: 17,
+                color: Colors.redAccent,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(
+              height: 9,
+            ),
+            Divider(
+              color: Colors.grey.shade700,
+            ),
+            SizedBox(
+              height: 12,
+            ),
+            GestureDetector(
+              onTap: () {
+                Navigator.of(context).pop();
+              },
+              child: Container(
+                alignment: Alignment.center,
+                decoration: BoxDecoration(boxShadow: [
+                  BoxShadow(
+                    offset: Offset(0.0, 0),
+                    color: Colors.transparent,
+                  ),
+                ]),
+                child: Text(
+                  "OK",
+                  style: GoogleFonts.dmSans(
+                      color: Colors.redAccent, fontWeight: FontWeight.bold),
+                ),
+              ),
             ),
           ],
         ),
       ),
-      // floatingActionButton: Container(
-      //   height: 70,
-      //   width: MediaQuery.of(context).size.width/1.08,
-      //   decoration: BoxDecoration(
-      //     // color: Color.fromRGBO(255, 78, 91, 1),
-      //     borderRadius: BorderRadius.circular(10),
-      //   ),
-      //   child: Padding(
-      //     padding: const EdgeInsets.all(8.0),
-      //     child: Row(
-      //       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      //       children: [
-      //         Container(
-      //           alignment: Alignment.center,
-      //           decoration: BoxDecoration(
-      //             color: Colors.white12,
-      //             borderRadius: BorderRadius.only(topLeft: Radius.circular(10),bottomLeft: Radius.circular(10)),
-      //           ),
-      //           child: Column(
-      //             mainAxisAlignment: MainAxisAlignment.center,
-      //             children: [
-      //               Text("Rs.$sum",
-      //                   style: GoogleFonts.dmSans(
-      //                       color: Colors.black,
-      //                       fontWeight: FontWeight.bold,
-      //                       letterSpacing: 1.4,
-      //                       fontSize: 18)),
-      //               Text("View Price Breakup",
-      //                   style: GoogleFonts.dmSans(
-      //                       color: Color.fromRGBO(255, 78, 91, 1),
-      //                       fontWeight: FontWeight.bold,
-      //                       letterSpacing: 1.4,
-      //                       fontSize: 14)),
-      //             ],
-      //           ),
-      //         ),
-      //         Container(
-      //           alignment: Alignment.center,
-      //           width: MediaQuery.of(context).size.width/2.15,
-      //           height: 70,
-      //           decoration: BoxDecoration(
-      //             color: Color.fromRGBO(255, 78, 91, 1),
-      //             borderRadius: BorderRadius.only(topRight: Radius.circular(10),bottomRight: Radius.circular(10)),
-      //           ),
-      //           child: Text(
-      //             "Place Order",
-      //             style: GoogleFonts.dmSans(
-      //                 color: Colors.white,
-      //                 fontWeight: FontWeight.bold,
-      //                 letterSpacing: 1.4,
-      //                 fontSize: 18),
-      //           ),
-      //         ),
-      //       ],
-      //     ),
-      //   ),
-      //
-      // ),
+    );
+  }
+
+  showDilogE({BuildContext context, int index}) {
+    return showDialog(
+      context: context,
+      builder: (context) => Container(
+        width: MediaQuery.of(context).size.width / 1.2,
+        child: AlertDialog(
+          insetPadding: EdgeInsets.all(10),
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            "Are you sure you want remove this items?",
+            style: GoogleFonts.aBeeZee(fontSize: 14),
+          ),
+          actions: [
+            Container(
+              child: ElevatedButton(
+                style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all(Colors.white)),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text(
+                  "Cancel",
+                  style:
+                      GoogleFonts.dmSans(color: Color.fromRGBO(255, 78, 91, 1),),
+                ),
+              ),
+              decoration: BoxDecoration(
+                border:
+                    Border.all(color: Color.fromRGBO(255, 78, 91, 1), width: 1.5),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              height: 40,
+            ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: ElevatedButton(
+                style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all(
+                      Color.fromRGBO(255, 78, 91, 1),
+                )),
+                onPressed: () async {
+                  fMyCart.cart[index].product.inFavorits = false;
+                  await ApiServices().addAndDeleteToFavourite(
+                      fMyCart.cart[index].product.productId);
+
+                  setState(() {});
+
+                  Navigator.pop(context);
+                },
+                child: Text(
+                  "Remove",
+                  style: GoogleFonts.dmSans(color: Colors.white),
+                ),
+              ),
+              height: 40,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  showDilogForMyCart({BuildContext context, int index}) {
+    return showDialog(
+      context: context,
+      builder: (context) => Container(
+        width: MediaQuery.of(context).size.width / 1.2,
+        child: AlertDialog(
+          insetPadding: EdgeInsets.all(10),
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            "Are you sure you want to remove a product from the cart?",
+            style: GoogleFonts.dmSans(fontSize: 14),
+          ),
+          actions: [
+            Container(
+              child: ElevatedButton(
+                style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all(
+                  Colors.white,
+                )),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text(
+                  "No",
+                  style:
+                      GoogleFonts.dmSans(color: Color.fromRGBO(255, 78, 91, 1)),
+                ),
+              ),
+              decoration: BoxDecoration(
+                border:
+                    Border.all(color: Color.fromRGBO(255, 78, 91, 1), width: 1.5),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              height: 40,
+            ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: ElevatedButton(
+                style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all(
+                      Color.fromRGBO(255, 78, 91, 1),
+                )),
+                onPressed: () async {
+                  await ApiServices().deleteAddToCartItem(
+                      context, fMyCart.cart[index].product.productId);
+                  setState(() {
+                    // storePayAmount = 0;
+                    storeMrpValue = storeMrpValue -
+                        (fMyCart.cart[index].count *
+                            fMyCart.cart[index].product.mrp);
+                    storePayAmount = storePayAmount -
+                        (fMyCart.cart[index].count *
+                            fMyCart.cart[index].product.price);
+                    storeDiscount = storeMrpValue - storePayAmount;
+
+                    subPrice = null;
+                    mrpPrice = null;
+                    fetchAddToCartItem();
+                    ApiServices()
+                        .microProductDetails(widget.productId, context);
+                  });
+
+                  Navigator.pop(context);
+                },
+                child: Text(
+                  "Yes",
+                  style: GoogleFonts.dmSans(color: Colors.white),
+                ),
+              ),
+              height: 40,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -798,7 +1119,7 @@ class MyCartStoreNumber {
 }
 
 class MyTotalInstantPriceMrp {
-  int price;
+  double price;
   int mrpPrice;
 
   MyTotalInstantPriceMrp({this.price, this.mrpPrice});

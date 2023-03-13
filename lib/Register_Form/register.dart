@@ -11,9 +11,12 @@ import 'package:jalaram/Model/get_profile_image.dart';
 import 'package:jalaram/Model/register_auth_model.dart';
 import 'package:jalaram/login_details/loginwithmobile.dart';
 
+String storeLocation = "";
+
 class Register extends StatefulWidget {
   int value;
-  Register({this.value});
+  bool isActive;
+  Register({this.value, this.isActive});
   @override
   _RegisterState createState() => _RegisterState();
 }
@@ -40,6 +43,7 @@ class _RegisterState extends State<Register> {
   TextEditingController addressController = TextEditingController();
   TextEditingController landmarkController = TextEditingController();
   TextEditingController pinCodeController = TextEditingController();
+  TextEditingController pnumberController = TextEditingController();
 
   @override
   void dispose() {
@@ -61,7 +65,7 @@ class _RegisterState extends State<Register> {
       ra = RegisterAuth.fromJson(decoded);
       getProfileImages();
       setVariableAsTextFeild();
-      Fluttertoast.showToast(msg: "get profile products");
+      // Fluttertoast.showToast(msg: "get profile products");
       setState(() {
         isGetProfile = true;
       });
@@ -76,7 +80,7 @@ class _RegisterState extends State<Register> {
     if (response.statusCode == 200) {
       gpp = GetProfilePic.fromJson(decoded);
 
-      Fluttertoast.showToast(msg: "get profile products");
+      // Fluttertoast.showToast(msg: "get profile products");
       setState(() {
         isGetProfileImage = true;
       });
@@ -94,6 +98,8 @@ class _RegisterState extends State<Register> {
   setVariableAsTextFeild() {
     nameController.text = ra.name;
     emailController.text = ra.email;
+
+    pnumberController.text = ra.mobNumber;
     companyNameController.text = ra.companyName;
     if (ra.address == "Surat") {
       setState(() {
@@ -109,10 +115,12 @@ class _RegisterState extends State<Register> {
     }
   }
 
+  final _formKey = GlobalKey<FormState>();
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color.fromRGBO(171, 28, 36, 1),
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Container(
           color: Colors.grey.shade100,
@@ -121,141 +129,125 @@ class _RegisterState extends State<Register> {
                 ? Center(
                     child: CircularProgressIndicator(),
                   )
-                : Column(
-                    mainAxisAlignment: MainAxisAlignment.start,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Stack(
-                        alignment: Alignment.center,
-                        children: [
-                          Container(
-                            height: MediaQuery.of(context).size.height / 2.5,
-                            decoration: BoxDecoration(
-                              color: Color.fromRGBO(171, 28, 36, 1),
-                              image: DecorationImage(
-                                fit: BoxFit.fill,
-                                image: AssetImage(
-                                  "assets/border2.png",
-                                ),
-                              ),
-                            ),
+                : Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Container(
+                          alignment: Alignment.topLeft,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
                           ),
-                          isGetProfileImage == true
-                              ? CircleAvatar(
-                                  radius: 64,
-                                  child: _image != null || gpp.image != null
-                                      ? ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(61),
-                                          child: _image == null
-                                              ? Image.network(
-                                                  gpp.image,
-                                                  height: 130,
-                                                  width: 130,
-                                                  fit: BoxFit.cover,
-                                                )
-                                              : Image.file(
-                                                  _image,
-                                                  height: 130,
-                                                  width: 130,
-                                                  fit: BoxFit.cover,
+                          child: IconButton(
+                              icon: Icon(Icons.arrow_back_ios_rounded),
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              color: Colors.black),
+                        ),
+                        isGetProfileImage == true
+                            ? Stack(
+                                alignment: Alignment.center,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 64,
+                                    child: _image != null || gpp.image != null
+                                        ? ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(61),
+                                            child: _image == null
+                                                ? Image.network(
+                                                    gpp.image,
+                                                    height: 130,
+                                                    width: 130,
+                                                    fit: BoxFit.cover,
+                                                  )
+                                                : Image.file(
+                                                    _image,
+                                                    height: 130,
+                                                    width: 130,
+                                                    fit: BoxFit.cover,
+                                                  ),
+                                          )
+                                        : InkWell(
+                                            onTap: () {
+                                              showImageChooseBottom(context);
+                                            },
+                                            child: Container(
+                                              decoration: BoxDecoration(
+                                                color: Colors.grey[200],
+                                                borderRadius:
+                                                    BorderRadius.circular(61),
+                                              ),
+                                              width: 124,
+                                              height: 124,
+                                              child: Icon(
+                                                Icons.camera_alt,
+                                                color: Colors.grey[800],
+                                              ),
+                                            ),
+                                          ),
+                                  ),
+                                  isGetProfileImage == true
+                                      ? _image == null && gpp.image == null
+                                          ? Container()
+                                          : Positioned(
+                                              bottom: 0,
+                                              right: 0,
+                                              child: InkWell(
+                                                onTap: () {
+                                                  print("Hello World");
+                                                  showImageChooseBottom(
+                                                      context);
+                                                },
+                                                child: Container(
+                                                  height: 22,
+                                                  width: 22,
+                                                  decoration: BoxDecoration(
+                                                    shape: BoxShape.circle,
+                                                    color: Colors.black,
+                                                  ),
+                                                  child: Icon(Icons.edit,
+                                                      color: Colors.white,
+                                                      size: 12),
                                                 ),
-                                        )
-                                      : InkWell(
-                                          onTap: () {
-                                            showImageChooseBottom(context);
-                                          },
-                                          child: Container(
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey[200],
-                                              borderRadius:
-                                                  BorderRadius.circular(61),
-                                            ),
-                                            width: 124,
-                                            height: 124,
-                                            child: Icon(
-                                              Icons.camera_alt,
-                                              color: Colors.grey[800],
-                                            ),
-                                          ),
-                                        ),
-                                )
-                              : Container(),
-                          isGetProfileImage == true
-                              ? _image == null && gpp.image == null
-                                  ? Container()
-                                  : Positioned(
-                                      // right: 140,
-
-                                      top: 190,
-                                      bottom: 110,
-                                      left: MediaQuery.of(context).size.width /
-                                          1.65,
-                                      child: InkWell(
-                                        onTap: () {
-                                          showImageChooseBottom(context);
-                                        },
-                                        child: Container(
-                                          height: 22,
-                                          width: 22,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: Colors.black,
-                                          ),
-                                          child: Icon(Icons.edit,
-                                              color: Colors.white, size: 12),
-                                        ),
-                                      ),
-                                    )
-                              : Container(),
-                          Positioned(
-                            bottom: 65,
-                            child: Text(
-                              "Note: Your own profile picture is mandatory",
-                              style: GoogleFonts.dmSans(
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.w500),
-                            ),
-                          ),
-                          Positioned(
-                            top: 0,
-                            left: 0,
-                            child: Container(
-                              alignment: Alignment.topLeft,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                              ),
-                              child: IconButton(
-                                  icon: Icon(Icons.arrow_back_ios_rounded),
-                                  onPressed: () {
-                                    Navigator.pop(context);
-                                  },
-                                  color: Colors.black),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(
-                        width: 60,
-                      ),
-                      Container(
-                        color: Color.fromRGBO(171, 28, 36, 1),
-                        child: Column(
+                                              ),
+                                            )
+                                      : Container(),
+                                ],
+                              )
+                            : Container(),
+                        SizedBox(
+                          height: 10,
+                        ),
+                        Text(
+                          "Note: Your own profile picture is mandatory",
+                          style: GoogleFonts.dmSans(
+                              color: Colors.black, fontWeight: FontWeight.w500),
+                        ),
+                        SizedBox(
+                          width: 60,
+                        ),
+                        Column(
                           children: [
                             SizedBox(
-                              width: 60,
+                              height: 20,
                             ),
-                            Align(
-                              child: Text(
-                                "Sign Up",
-                                style: GoogleFonts.nunito(
-                                    fontSize: 32,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 2),
-                              ),
-                              alignment: Alignment.topCenter,
-                            ),
+                            widget.isActive == true
+                                ? SizedBox()
+                                : Align(
+                                    child: Text(
+                                      "Sign Up",
+                                      style: GoogleFonts.nunito(
+                                          fontSize: 32,
+                                          color: Colors.black,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: 2),
+                                    ),
+                                    alignment: Alignment.topCenter,
+                                  ),
                             SizedBox(
                               height: 27,
                             ),
@@ -268,35 +260,47 @@ class _RegisterState extends State<Register> {
                                   Text(
                                     "Name",
                                     style: GoogleFonts.aBeeZee(
-                                        color: Colors.white),
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold),
                                   ),
                                   SizedBox(
                                     height: 7,
                                   ),
-                                  TextField(
-                                    style:
-                                        GoogleFonts.dmSans(color: Colors.white),
+                                  TextFormField(
+                                    validator: (value) {
+                                      if (value == "" || value.isEmpty) {
+                                        return "Enter Valid Name";
+                                      }
+                                      return null;
+                                    },
+                                    style: GoogleFonts.dmSans(
+                                      color: Colors.black,
+                                    ),
                                     controller: nameController,
                                     decoration: InputDecoration(
-                                        prefixIcon: Icon(Icons.person,
-                                            color: Colors.white),
+                                        prefixIcon: Icon(
+                                          Icons.person,
+                                          color: Colors.black,
+                                        ),
                                         border: OutlineInputBorder(
                                           borderRadius:
                                               BorderRadius.circular(5),
-                                          borderSide:
-                                              BorderSide(color: Colors.white),
+                                          borderSide: BorderSide(
+                                            color: Colors.black,
+                                          ),
                                         ),
                                         enabledBorder: OutlineInputBorder(
                                           borderRadius:
                                               BorderRadius.circular(5),
                                           borderSide: BorderSide(
-                                            color: Colors.white,
+                                            color: Colors.black,
                                             width: 1,
                                           ),
                                         ),
                                         focusedBorder: OutlineInputBorder(
                                           borderSide: BorderSide(
-                                            color: Colors.white,
+                                            color:
+                                                Color.fromRGBO(171, 28, 36, 1),
                                             width: 1,
                                           ),
                                           borderRadius:
@@ -310,43 +314,107 @@ class _RegisterState extends State<Register> {
                                   Text(
                                     "Email",
                                     style: GoogleFonts.aBeeZee(
-                                        color: Colors.white),
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                   SizedBox(
                                     height: 7,
                                   ),
-                                  TextField(
+                                  TextFormField(
+                                    validator: (value) {
+                                      if (value == "" || value.isEmpty) {
+                                        return "Enter Valid Email";
+                                      }
+                                      return null;
+                                    },
                                     controller: emailController,
-                                    style:
-                                        GoogleFonts.dmSans(color: Colors.white),
+                                    style: GoogleFonts.dmSans(
+                                      color: Colors.black,
+                                    ),
                                     decoration: InputDecoration(
                                         prefixIcon: Icon(
                                           Icons.email,
-                                          color: Colors.white,
+                                          color: Colors.black,
                                         ),
                                         border: OutlineInputBorder(
                                           borderRadius:
                                               BorderRadius.circular(5),
-                                          borderSide:
-                                              BorderSide(color: Colors.white),
+                                          borderSide: BorderSide(
+                                            color: Colors.black,
+                                          ),
                                         ),
                                         enabledBorder: OutlineInputBorder(
                                           borderRadius:
                                               BorderRadius.circular(5),
                                           borderSide: BorderSide(
-                                            color: Colors.white,
+                                            color: Colors.black,
                                             width: 1,
                                           ),
                                         ),
                                         focusedBorder: OutlineInputBorder(
                                           borderSide: BorderSide(
-                                            color: Colors.white,
+                                            color: Colors.black,
                                             width: 1,
                                           ),
                                           borderRadius:
                                               BorderRadius.circular(5),
                                         ),
                                         contentPadding: EdgeInsets.all(10)),
+                                  ),
+                                  SizedBox(
+                                    height: 15,
+                                  ),
+                                  Text(
+                                    "Mobile",
+                                    style: GoogleFonts.aBeeZee(
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold),
+                                  ),
+                                  SizedBox(
+                                    height: 7,
+                                  ),
+                                  TextFormField(
+                                    validator: (value) {
+                                      if (value == "" || value.isEmpty) {
+                                        return "Enter Valid Number";
+                                      }
+                                      return null;
+                                    },
+                                    style: GoogleFonts.dmSans(
+                                      color: Colors.black,
+                                    ),
+                                    controller: pnumberController,
+                                    decoration: InputDecoration(
+                                        prefixIcon: Icon(
+                                          Icons.cell_tower,
+                                          color: Colors.black,
+                                        ),
+                                        border: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                          borderSide: BorderSide(
+                                            color: Colors.black,
+                                          ),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                          borderSide: BorderSide(
+                                            color: Colors.black,
+                                            width: 1,
+                                          ),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderSide: BorderSide(
+                                            color:
+                                                Color.fromRGBO(171, 28, 36, 1),
+                                            width: 1,
+                                          ),
+                                          borderRadius:
+                                              BorderRadius.circular(5),
+                                        ),
+                                        contentPadding: EdgeInsets.all(12)),
                                   ),
                                   SizedBox(
                                     height: 15,
@@ -354,39 +422,48 @@ class _RegisterState extends State<Register> {
                                   Text(
                                     "Company Name",
                                     style: GoogleFonts.aBeeZee(
-                                        color: Colors.white),
+                                      color: Colors.black,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                   SizedBox(
                                     height: 7,
                                   ),
-                                  TextField(
+                                  TextFormField(
+                                    validator: (value) {
+                                      if (value == "" || value.isEmpty) {
+                                        return "Enter Company Name";
+                                      }
+                                      return null;
+                                    },
                                     controller: companyNameController,
                                     style:
-                                        GoogleFonts.dmSans(color: Colors.white),
+                                        GoogleFonts.dmSans(color: Colors.black),
                                     decoration: InputDecoration(
                                         prefixIcon: Image.asset(
                                           "assets/company.png",
                                           height: 10,
                                           width: 10,
-                                          color: Colors.white,
+                                          color: Colors.black,
                                         ),
                                         border: OutlineInputBorder(
                                           borderRadius:
                                               BorderRadius.circular(5),
-                                          borderSide:
-                                              BorderSide(color: Colors.white),
+                                          borderSide: BorderSide(
+                                            color: Colors.black,
+                                          ),
                                         ),
                                         enabledBorder: OutlineInputBorder(
                                           borderRadius:
                                               BorderRadius.circular(5),
                                           borderSide: BorderSide(
-                                            color: Colors.white,
+                                            color: Colors.black,
                                             width: 1,
                                           ),
                                         ),
                                         focusedBorder: OutlineInputBorder(
                                           borderSide: BorderSide(
-                                            color: Colors.white,
+                                            color: Colors.black,
                                             width: 1,
                                           ),
                                           borderRadius:
@@ -397,78 +474,86 @@ class _RegisterState extends State<Register> {
                                   SizedBox(
                                     height: 15,
                                   ),
-                                  Text(
-                                    "Where are you from?",
-                                    style: GoogleFonts.aBeeZee(
-                                        color: Colors.white),
-                                  ),
-                                  Theme(
-                                    data: Theme.of(context).copyWith(
-                                        unselectedWidgetColor: Colors.white,
-                                        disabledColor: Colors.blue),
-                                    child: Row(
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          children: [
-                                            Radio(
-                                                focusColor: Colors.white,
-                                                activeColor: Colors.white,
-                                                hoverColor: Colors.white,
-                                                value: 1,
-                                                groupValue: val,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    val = value;
-                                                  });
-                                                }),
-                                            Text(
-                                              "Surat",
-                                              style: GoogleFonts.aBeeZee(
-                                                  color: Colors.white),
-                                            )
-                                          ],
+                                  widget.isActive == true
+                                      ? SizedBox()
+                                      : Text(
+                                          "Where are you from?",
+                                          style: GoogleFonts.aBeeZee(
+                                            color: Colors.black,
+                                            fontWeight: FontWeight.bold,
+                                          ),
                                         ),
-                                        SizedBox(
-                                          width: 20,
+                                  widget.isActive == true
+                                      ? SizedBox()
+                                      : Theme(
+                                          data: Theme.of(context).copyWith(
+                                              unselectedWidgetColor:
+                                                  Colors.black,
+                                              disabledColor: Colors.blue),
+                                          child: Row(
+                                            children: [
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                children: [
+                                                  Radio(
+                                                      focusColor: Colors.black,
+                                                      activeColor: Colors.black,
+                                                      hoverColor: Colors.black,
+                                                      value: 1,
+                                                      groupValue: val,
+                                                      onChanged: (value) {
+                                                        setState(() {
+                                                          val = value;
+                                                        });
+                                                      }),
+                                                  Text(
+                                                    "Surat",
+                                                    style: GoogleFonts.aBeeZee(
+                                                      color: Colors.black,
+                                                    ),
+                                                  )
+                                                ],
+                                              ),
+                                              SizedBox(
+                                                width: 20,
+                                              ),
+                                              Row(
+                                                mainAxisAlignment:
+                                                    MainAxisAlignment.start,
+                                                children: [
+                                                  Radio(
+                                                      value: 2,
+                                                      groupValue: val,
+                                                      activeColor: Colors.black,
+                                                      onChanged: (value) {
+                                                        setState(() {
+                                                          val = value;
+                                                        });
+                                                      }),
+                                                  Text(
+                                                    "Other City",
+                                                    style: GoogleFonts.aBeeZee(
+                                                      color: Colors.black,
+                                                    ),
+                                                  )
+                                                ],
+                                              ),
+                                            ],
+                                          ),
                                         ),
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.start,
-                                          children: [
-                                            Radio(
-                                                value: 2,
-                                                groupValue: val,
-                                                activeColor: Colors.white,
-                                                onChanged: (value) {
-                                                  setState(() {
-                                                    val = value;
-                                                  });
-                                                }),
-                                            Text(
-                                              "Other City",
-                                              style: GoogleFonts.aBeeZee(
-                                                  color: Colors.white),
-                                            )
-                                          ],
-                                        ),
-                                      ],
-                                    ),
-                                  ),
                                   val == 1 ? fromSurat() : fromOtherCity(),
                                   SizedBox(
                                     height: 18,
                                   ),
                                   Container(
                                     width: MediaQuery.of(context).size.width,
-                                    child: RaisedButton(
-                                      padding:
-                                          EdgeInsets.only(top: 11, bottom: 11),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(5),
-                                      ),
-                                      color: Colors.white,
+                                    child: ElevatedButton(
+                                      style: ButtonStyle(
+                                          backgroundColor:
+                                              MaterialStateProperty.all(
+                                        Color.fromRGBO(255, 78, 91, 1),
+                                      )),
                                       onPressed: () async {
                                         String name = nameController.text;
                                         String email = emailController.text;
@@ -485,24 +570,58 @@ class _RegisterState extends State<Register> {
                                           pincode = pinCodeController.text;
                                         }
 
-                                        await ApiServices().profileImageUpload(
-                                            context, _image);
+                                        if (widget.isActive == false) {
+                                          if (_formKey.currentState
+                                                  .validate() &&
+                                              _image != null) {
+                                            await ApiServices()
+                                                .profileImageUpload(
+                                                    context, _image);
 
-                                        await ApiServices().registerAuth(
-                                          name,
-                                          email,
-                                          companyName,
-                                          address,
-                                          landmark,
-                                          pincode,
-                                          widget.value,
-                                          context,
-                                        );
+                                            await ApiServices().registerAuth(
+                                              name,
+                                              email,
+                                              companyName,
+                                              address,
+                                              landmark,
+                                              pincode,
+                                              0,
+                                              context,
+                                            );
+                                          } else {
+                                            return Fluttertoast.showToast(
+                                                msg:
+                                                    "Please Provide Image or Other Data");
+                                          }
+                                        }
+
+                                        if (widget.isActive == true) {
+                                          if (_formKey.currentState
+                                                  .validate()) {
+                                            await ApiServices()
+                                                .profileImageUpload(
+                                                    context, _image);
+
+                                            await ApiServices().registerAuth(
+                                              name,
+                                              email,
+                                              companyName,
+                                              address,
+                                              landmark,
+                                              pincode,
+                                              1,
+                                              context,
+                                            );
+                                          }
+                                        }
+
+                                        storeKeyByGet.write(
+                                            "Location", address);
                                       },
                                       child: Text(
                                         "SUBMIT",
-                                        style: GoogleFonts.nunito(
-                                            color: Colors.black,
+                                        style: GoogleFonts.dmSans(
+                                            color: Colors.white,
                                             letterSpacing: 2,
                                             fontSize: 19),
                                       ),
@@ -517,8 +636,8 @@ class _RegisterState extends State<Register> {
                             ),
                           ],
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
           ),
         ),
@@ -579,26 +698,43 @@ class _RegisterState extends State<Register> {
   }
 
   Widget fromSurat() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Text(
-        //   "City",
-        //   style: GoogleFonts.aBeeZee(),
-        // ),
-        // SizedBox(
-        //   height: 7,
-        // ),
-        // TextField(
-        //   decoration: InputDecoration(
-        //       prefixIcon: Icon(Icons.location_on),
-        //       border: OutlineInputBorder(
-        //         borderRadius: BorderRadius.circular(5),
-        //       ),
-        //       contentPadding: EdgeInsets.all(12)),
-        // ),
-      ],
-    );
+    return widget.isActive != true
+        ? SizedBox()
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                "Address",
+                style: GoogleFonts.aBeeZee(fontWeight: FontWeight.bold),
+              ),
+              SizedBox(
+                height: 7,
+              ),
+              Container(
+                width: MediaQuery.of(context).size.width,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black),
+                  borderRadius: BorderRadius.circular(5),
+                ),
+                height: 45,
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 8,
+                    ),
+                    Icon(
+                      Icons.location_searching,
+                      color: Colors.black,
+                    ),
+                    SizedBox(
+                      width: 8,
+                    ),
+                    Text(ra.address),
+                  ],
+                ),
+              ),
+            ],
+          );
   }
 
   Widget fromOtherCity() {
@@ -607,121 +743,214 @@ class _RegisterState extends State<Register> {
       children: [
         Text(
           "Address",
-          style: GoogleFonts.dmSans(
-            color: Colors.white,
+          style: GoogleFonts.aBeeZee(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
           ),
         ),
         SizedBox(
           height: 7,
         ),
-        TextField(
-          style: GoogleFonts.dmSans(color: Colors.white),
-          controller: addressController,
-          decoration: InputDecoration(
-              prefixIcon: Icon(
-                Icons.location_searching,
-                color: Colors.white,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(5),
-                borderSide: BorderSide(color: Colors.white),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(5),
-                borderSide: BorderSide(
-                  color: Colors.white,
-                  width: 1,
+        widget.isActive == true
+            ? Container(
+                width: MediaQuery.of(context).size.width,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black),
+                  borderRadius: BorderRadius.circular(5),
                 ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(
-                  color: Colors.white,
-                  width: 1,
+                height: 45,
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 8,
+                    ),
+                    Icon(
+                      Icons.location_searching,
+                      color: Colors.black,
+                    ),
+                    SizedBox(
+                      width: 8,
+                    ),
+                    Text(ra.address),
+                  ],
                 ),
-                borderRadius: BorderRadius.circular(5),
+              )
+            : TextFormField(
+                style: GoogleFonts.dmSans(color: Colors.black),
+                controller: addressController,
+                validator: (value) {
+                  if (value == "" || value.isEmpty) {
+                    return "Enter Valid Address";
+                  }
+                  return null;
+                },
+                decoration: InputDecoration(
+                    prefixIcon: Icon(
+                      Icons.location_searching,
+                      color: Colors.black,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(color: Colors.black),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(
+                        color: Colors.black,
+                        width: 1,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.black,
+                        width: 1,
+                      ),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    contentPadding: EdgeInsets.all(12)),
               ),
-              contentPadding: EdgeInsets.all(12)),
-        ),
         SizedBox(
           height: 15,
         ),
         Text(
           "Landmark",
-          style: GoogleFonts.dmSans(
-            color: Colors.white,
+          style: GoogleFonts.aBeeZee(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
           ),
         ),
         SizedBox(
           height: 7,
         ),
-        TextField(
-          controller: landmarkController,
-          style: GoogleFonts.dmSans(color: Colors.white),
-          decoration: InputDecoration(
-              prefixIcon: Icon(
-                Icons.flag,
-                color: Colors.white,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(5),
-                borderSide: BorderSide(color: Colors.white),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(5),
-                borderSide: BorderSide(
-                  color: Colors.white,
-                  width: 1,
+        widget.isActive == true
+            ? Container(
+                width: MediaQuery.of(context).size.width,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black),
+                  borderRadius: BorderRadius.circular(5),
                 ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(
-                  color: Colors.white,
-                  width: 1,
+                height: 45,
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 8,
+                    ),
+                    Icon(
+                      Icons.flag,
+                      color: Colors.black,
+                    ),
+                    SizedBox(
+                      width: 8,
+                    ),
+                    Text(ra.landmark),
+                  ],
                 ),
-                borderRadius: BorderRadius.circular(5),
+              )
+            : TextFormField(
+                validator: (value) {
+                  if (value == "" || value.isEmpty) {
+                    return "Enter Valid Landmark";
+                  }
+                  return null;
+                },
+                controller: landmarkController,
+                style: GoogleFonts.dmSans(color: Colors.black),
+                decoration: InputDecoration(
+                    prefixIcon: Icon(
+                      Icons.flag,
+                      color: Colors.black,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(color: Colors.black),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(
+                        color: Colors.black,
+                        width: 1,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.black,
+                        width: 1,
+                      ),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    contentPadding: EdgeInsets.all(12)),
               ),
-              contentPadding: EdgeInsets.all(12)),
-        ),
         SizedBox(
           height: 15,
         ),
         Text(
           "Pincode",
-          style: GoogleFonts.dmSans(
-            color: Colors.white,
+          style: GoogleFonts.aBeeZee(
+            color: Colors.black,
+            fontWeight: FontWeight.bold,
           ),
         ),
         SizedBox(
           height: 7,
         ),
-        TextField(
-          controller: pinCodeController,
-          style: GoogleFonts.dmSans(color: Colors.white),
-          decoration: InputDecoration(
-              prefixIcon: Icon(
-                Icons.location_on,
-                color: Colors.white,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(5),
-                borderSide: BorderSide(color: Colors.white),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(5),
-                borderSide: BorderSide(
-                  color: Colors.white,
-                  width: 1,
+        widget.isActive == true
+            ? Container(
+                width: MediaQuery.of(context).size.width,
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.black),
+                  borderRadius: BorderRadius.circular(5),
                 ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderSide: BorderSide(
-                  color: Colors.white,
-                  width: 1,
+                height: 45,
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: 8,
+                    ),
+                    Icon(
+                      Icons.location_on,
+                      color: Colors.black,
+                    ),
+                    SizedBox(
+                      width: 8,
+                    ),
+                    Text(ra.pincode),
+                  ],
                 ),
-                borderRadius: BorderRadius.circular(5),
+              )
+            : TextFormField(
+                validator: (value) {
+                  if (value == "" || value.isEmpty) {
+                    return "Enter Valid Pincode";
+                  }
+                  return null;
+                },
+                controller: pinCodeController,
+                style: GoogleFonts.dmSans(color: Colors.black),
+                decoration: InputDecoration(
+                    prefixIcon: Icon(
+                      Icons.location_on,
+                      color: Colors.black,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(color: Colors.black),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(5),
+                      borderSide: BorderSide(
+                        color: Colors.black,
+                        width: 1,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(
+                        color: Colors.black,
+                        width: 1,
+                      ),
+                      borderRadius: BorderRadius.circular(5),
+                    ),
+                    contentPadding: EdgeInsets.all(12)),
               ),
-              contentPadding: EdgeInsets.all(12)),
-        ),
       ],
     );
   }

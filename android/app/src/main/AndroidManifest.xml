@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.jalaram">
+    xmlns:tools="http://schemas.android.com/tools"
+    package="com.deluxe.jalaram">
 
 
 
@@ -10,13 +11,14 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.VIBRATE" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <uses-permission android:name="android.permission.CALL_PHONE" />
-    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
+
+<!--    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES"/>-->
 
 
     
    <application
-        android:label="Deluxe Ecommerce"
+        android:label="Deluxe"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:usesCleartextTraffic="true"
@@ -27,7 +29,17 @@
                <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
            </intent-filter>
        </receiver>
-        <activity
+<!--       <provider-->
+<!--           android:name="android.support.v4.content.FileProvider"-->
+<!--           android:authorities="zm.mytestapplication.fileprovider"-->
+<!--           android:exported="false"-->
+<!--           android:grantUriPermissions="true">-->
+<!--           <meta-data-->
+<!--               android:name="android.support.FILE_PROVIDER_PATHS"-->
+<!--               android:resource="@xml:" />-->
+<!--       </provider>-->
+
+       <activity
             android:name=".MainActivity"
             android:launchMode="singleTop"
             android:exported="true"
@@ -70,12 +82,7 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
-        <!-- <provider  android:name="android.support.v4.content.FileProvider" android:authorities="com.ulo.provider" android:grantUriPermissions="true" android:exported="false">
-                <meta-data 
-                    tools:replace="android:resource"
-                    android:name="android.support.FILE_PROVIDER_PATHS" 
-                    android:resource="@xml/provider_paths" />
-        </provider> -->
+
 
    </application>
     <queries>

@@ -48,7 +48,7 @@ class _ProfileState extends State<Profile> {
     if (response.statusCode == 200) {
       ra = RegisterAuth.fromJson(decoded);
       getProfileImages();
-      Fluttertoast.showToast(msg: "get profile products");
+      // Fluttertoast.showToast(msg: "get profile products");
       setState(() {
         isGetProfile = true;
       });
@@ -63,7 +63,7 @@ class _ProfileState extends State<Profile> {
     if (response.statusCode == 200) {
       gpp = GetProfilePic.fromJson(decoded);
       print(gpp.image);
-      Fluttertoast.showToast(msg: "get profile Image");
+      // Fluttertoast.showToast(msg: "get profile Image");
       setState(() {
         isGetProfilePicture = true;
       });
@@ -71,7 +71,55 @@ class _ProfileState extends State<Profile> {
     // });
   }
 
+  void showPopUpForLogOut() async {
+    await showMenu(
+      context: context,
+      position: RelativeRect.fromLTRB(800, 80, 0, 100),
+      items: [
+        PopupMenuItem(
+          child: InkWell(
+            onTap: () {
+              storeKeyByGet.remove('access_token');
+              storageKey.delete(key: 'access_token');
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SplashScreen(),
+                ),
+              );
+            },
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: [
+                Image.asset(
+                  "assets/logout.png",
+                  height: 26,
+                  width: 26,
+                  fit: BoxFit.cover,
+                  // color: Colors.white,
+                ),
+                SizedBox(
+                  width: 9,
+                ),
+                Text(
+                  "Logout",
+                  style: GoogleFonts.dmSans(
+                    // color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
   int value = 1;
+
+  bool isActiveRagister = true;
 
   @override
   void initState() {
@@ -107,7 +155,8 @@ class _ProfileState extends State<Profile> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => BottomNavBar(),
+                                    builder: (context) =>
+                                        BottomNavBar(index: 0),
                                   ),
                                 );
                               },
@@ -127,29 +176,9 @@ class _ProfileState extends State<Profile> {
                             alignment: Alignment.topLeft,
                             child: GestureDetector(
                               onTap: () async {
-
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => NotificationPage(),));
+                                return showPopUpForLogOut();
                               },
-                              child: Stack(
-                                alignment: Alignment.topRight,
-                                children: [
-                                  Image.asset(
-                                    "assets/bell.jpeg",
-                                    height: 30,
-                                    width: 30,
-                                  ),
-                                  Container(
-                                    alignment: Alignment.center,
-                                    padding: EdgeInsets.all(2.5),
-                                    margin: EdgeInsets.all(1),
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Colors.red,
-                                    ),
-                                    child: Text(lengthOfNotify.toString(),style: GoogleFonts.dmSans(fontSize: 12),),
-                                  ),
-                                ],
-                              ),
+                              child: Icon(Icons.more_vert),
                             ),
                           ),
                         ],
@@ -163,7 +192,7 @@ class _ProfileState extends State<Profile> {
                         Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => Register(value: value),
+                              builder: (context) => Register(value: value,isActive: isActiveRagister),
                             ));
                       },
                       child: Container(
@@ -447,50 +476,47 @@ class _ProfileState extends State<Profile> {
                   thickness: 1,
                 ),
                 SizedBox(
-                  height: MediaQuery.of(context).size.height / 15,
+                  height: 30,
                 ),
-                InkWell(
-                  onTap: () {
-                    storeKeyByGet.remove('access_token');
-                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => SplashScreen(),));
-                  },
-                  child: Container(
-                    margin: EdgeInsets.only(
-                      left: 100,
-                      right: 100,
-                      top: 8,
-                    ),
-                    padding: EdgeInsets.all(8),
-                    // color: Colors.amber,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.black),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Image.asset(
-                          "assets/logout.png",
-                          height: 26,
-                          width: 26,
-                          fit: BoxFit.cover,
-                          // color: Colors.white,
-                        ),
-                        SizedBox(
-                          width: 9,
-                        ),
-                        Text(
-                          "Logout",
-                          style: GoogleFonts.dmSans(
-                            // color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
+                // InkWell(
+                //   onTap: () {},
+                //   child: Container(
+                //     margin: EdgeInsets.only(
+                //       left: 100,
+                //       right: 100,
+                //       top: 8,
+                //     ),
+                //     padding: EdgeInsets.all(8),
+                //     // color: Colors.amber,
+                //     decoration: BoxDecoration(
+                //       border: Border.all(color: Colors.black),
+                //     ),
+                //     child: Row(
+                //       mainAxisSize: MainAxisSize.min,
+                //       mainAxisAlignment: MainAxisAlignment.center,
+                //       children: [
+                //         Image.asset(
+                //           "assets/logout.png",
+                //           height: 26,
+                //           width: 26,
+                //           fit: BoxFit.cover,
+                //           // color: Colors.white,
+                //         ),
+                //         SizedBox(
+                //           width: 9,
+                //         ),
+                //         Text(
+                //           "Logout",
+                //           style: GoogleFonts.dmSans(
+                //             // color: Colors.white,
+                //             fontWeight: FontWeight.bold,
+                //             fontSize: 18,
+                //           ),
+                //         ),
+                //       ],
+                //     ),
+                //   ),
+                // ),
                 Padding(
                   padding: const EdgeInsets.only(top: 25),
                   child: Align(

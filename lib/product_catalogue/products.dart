@@ -1,35 +1,27 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+
 import 'package:flutter_html/flutter_html.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_search_bar/flutter_search_bar.dart';
+
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:http/http.dart';
 import 'package:jalaram/Connect_API/api.dart';
-import 'package:jalaram/Data_Provider/data_provider.dart';
+
 import 'package:jalaram/Data_Provider/store_list_bool.dart';
 
 import 'package:jalaram/Model/favourite_with_id.dart';
 import 'package:jalaram/Model/home_cart_category_model.dart';
 import 'package:jalaram/Model/micro_product.dart';
 import 'package:jalaram/Model/price_counter_model.dart';
+import 'package:jalaram/component/back_button.dart';
 import 'package:jalaram/product_catalogue/productdetails.dart';
-import 'package:open_file/open_file.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:provider/provider.dart';
 
 import '../Home/bottomnavbar.dart';
-import '../Model/searching_product_model.dart';
-
-// import 'package:pdf/pdf.dart';
-// import 'package:pdf/widgets.dart' as pw;
-// import 'package:printing/printing.dart';
-
-// ignore: must_be_immutable
 
 List<IncrementNumber> dataIncrement = [];
 
@@ -44,16 +36,8 @@ class Products extends StatefulWidget {
 
 class _ProductsState extends State<Products> {
   // var _valueOfBoolean = [];
-
-  int _selectedCount = -1;
-
   MicroProduct mp;
-
   PriceCounterModel pcm;
-
-  // final pdf = pw.Document();
-
-  // List<bool> addBooleanVariable = [];
 
   Icon customIcon = Icon(Icons.search);
 
@@ -76,19 +60,17 @@ class _ProductsState extends State<Products> {
   Future onSelectNotifyPdf(String json) async {
     final obj = jsonDecode(json);
     if (obj['isSuccess']) {
-      OpenFile.open(obj['filePath']);
+      // OpenFile.open(obj['filePath']);
     }
   }
 
   @override
   void initState() {
     fetchMicroProducts();
+    fetchCategory();
     // timer = Timer.periodic(Duration(microseconds: 100), (Timer t) => fetchMicroProducts());
     super.initState();
     // loadData();
-    fetchCategory();
-
-    ApiServices().microProducts(context);
 
     FlutterLocalNotificationsPlugin flip =
         new FlutterLocalNotificationsPlugin();
@@ -111,10 +93,6 @@ class _ProductsState extends State<Products> {
 
   var accessProvider;
 
-  // loadData () async {
-  //   widget.number == 0 ? await fetchPriceCounterProducts() : await fetchMicroProducts();
-  // }
-
   final storePrice = [];
 
   num sum = 0;
@@ -126,22 +104,26 @@ class _ProductsState extends State<Products> {
 
   fetchMicroProducts() async {
     // await Future.delayed(Duration(milliseconds: 500), () async {
-    Response response = await ApiServices().microProducts(context);
+    final response = await ApiServices().microProducts(context);
     var decoded = jsonDecode(response.body);
     if (response.statusCode == 200) {
       mp = MicroProduct.fromJson(decoded);
       debugPrint("MP : ${mp.status}");
+      print(mp.response[3].price);
+
       setState(() {
         numberProduct = mp.response.length;
       });
       if (widget.number == 0) {
-        mp = null;
+        openAndCloseLoadingDialog(context: context);
         fetchPriceCounterProducts();
+        Navigator.of(context).pop();
       }
 
       dataIncrement = List.generate(mp.response.length, (index) {
         // storePrice.add(mp.response[index].price * mp.response[index].inCart);
-
+        isFavouriteBtn.add(false);
+        storeBoolForFavourite.add(false);
         return IncrementNumber(
           productName: mp.response[index].title,
           counter: mp.response[index].inCart,
@@ -170,12 +152,18 @@ class _ProductsState extends State<Products> {
 
   String text = "";
 
+  List<bool> isFavouriteBtn = [];
+
   fetchSearchingProduct(String key) async {
     // await Future.delayed(Duration(milliseconds: 100), () async {
-    Response response = await ApiServices().searchProducts(context, key);
+    final response = await ApiServices().searchProducts(context, key);
     var decoded = jsonDecode(response.body);
     if (response.statusCode == 200) {
+      setState(() {
+        mp.response = null;
+      });
       mp = MicroProduct.fromJson(decoded);
+      print("Search : ${mp.response.length}");
       dataIncrement = List.generate(mp.response.length, (index) {
         storeIndexResponse.add(index.toString());
         return IncrementNumber(
@@ -196,6 +184,8 @@ class _ProductsState extends State<Products> {
 
   int numberProduct = 0;
   int productDataLength = 0;
+
+  bool isFirstAllProduct = false;
 
   fetchPriceCounterProducts() async {
     // await Future.delayed(Duration(milliseconds: 500), () async {
@@ -225,12 +215,14 @@ class _ProductsState extends State<Products> {
     // });
   }
 
+  List storeBoolForFavourite = [];
+
   HomeCartCategory hcc;
 
   fetchPriceSearch(int highValue) async {
     int lowValue = highValue - 1;
     print(highValue - 1);
-    Response response =
+    final response =
         await ApiServices().getSearchByPrice(lowValue, highValue, context);
     var decoded = jsonDecode(response.body);
     if (response.statusCode == 200) {
@@ -240,12 +232,18 @@ class _ProductsState extends State<Products> {
     }
   }
 
+  List makeColorChangeList = [];
+
   fetchCategory() async {
     // await Future.delayed(Duration(milliseconds: 100), () async {
-    Response response = await ApiServices().getHomeCategory(context);
+    final response = await ApiServices().getHomeCategory(context);
     var decoded = jsonDecode(response.body);
     if (response.statusCode == 200) {
       hcc = HomeCartCategory.fromJson(decoded);
+      for (int i = 0; i <= hcc.catList.length; i++) {
+        isActiveCateWithColor.add(false);
+        makeColorChangeList.add(false);
+      }
       setState(() {
         isLoading = true;
       });
@@ -255,7 +253,8 @@ class _ProductsState extends State<Products> {
 
   fetchStockInProducts() async {
     // await Future.delayed(Duration(milliseconds: 100), () async {
-    Response response = await ApiServices().getStockInProduct(context);
+    mp = null;
+    final response = await ApiServices().getStockInProduct(context);
     var decoded = jsonDecode(response.body);
     if (response.statusCode == 200) {
       mp = MicroProduct.fromJson(decoded);
@@ -266,7 +265,8 @@ class _ProductsState extends State<Products> {
 
   fetchStockOutOfProducts() async {
     // await Future.delayed(Duration(milliseconds: 100), () async {
-    Response response = await ApiServices().getStockOutOfProduct(context);
+    mp = null;
+    final response = await ApiServices().getStockOutOfProduct(context);
     var decoded = jsonDecode(response.body);
     if (response.statusCode == 200) {
       mp = MicroProduct.fromJson(decoded);
@@ -277,7 +277,8 @@ class _ProductsState extends State<Products> {
 
   fetchTrendingProducts() async {
     // await Future.delayed(Duration(milliseconds: 100), () async {
-    Response response = await ApiServices().getTrendingProducts(context);
+    mp = null;
+    final response = await ApiServices().getTrendingProducts(context);
     var decoded = jsonDecode(response.body);
     if (response.statusCode == 200) {
       mp = MicroProduct.fromJson(decoded);
@@ -316,6 +317,9 @@ class _ProductsState extends State<Products> {
                 Icons.search,
                 color: Color.fromRGBO(22, 2, 105, 1),
               ),
+              SizedBox(
+                width: 5,
+              ),
               Text("Search",
                   style: GoogleFonts.openSans(
                       color: Color.fromRGBO(22, 2, 105, 1))),
@@ -324,119 +328,99 @@ class _ProductsState extends State<Products> {
           value: 1,
           onTap: () {
             // Navigator.pop(context);
-            setState(() {
-              if (this.customIcon.icon == Icons.search) {
-                setState(() {
-                  isActiveSearchBar = true;
-                });
-                customSearchBar = Row(
-                  children: [
-                    GestureDetector(
-                      child: Icon(Icons.arrow_back_ios_sharp),
-                      onTap: () {
-                        Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => BottomNavBar(),
-                            ));
-                      },
-                    ),
-                    Flexible(
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: Container(
-                          height: 40,
-                          child: TextField(
-                            onChanged: (value) {
-                              if (value == "") {
-                                fetchMicroProducts();
-                              }
+            setState(
+              () {
+                if (this.customIcon.icon == Icons.search) {
+                  setState(() {
+                    isActiveSearchBar = true;
+                  });
+                  customSearchBar = Row(
+                    children: [
+                      GestureDetector(
+                        child: Icon(Icons.arrow_back_ios_sharp),
+                        onTap: () {
+                          Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => BottomNavBar(index: 0),
+                              ));
+                        },
+                      ),
+                      Flexible(
+                        child: Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Container(
+                            height: 40,
+                            child: TextField(
+                              onChanged: (value) {
+                                if (value == "") {
+                                  fetchMicroProducts();
+                                }
 
-                              setState(() {
-                                fetchSearchingProduct(value);
-
-                                fetchPriceSearch(int.parse(value));
-                              });
-                            },
-                            style: GoogleFonts.dmSans(),
-                            decoration: InputDecoration(
-                              contentPadding: EdgeInsets.only(bottom: 10),
-                              enabledBorder: UnderlineInputBorder(
-                                borderRadius: BorderRadius.zero,
-                                borderSide: BorderSide(
-                                    color: Colors.blueAccent, width: 1.7),
+                                setState(() {
+                                  fetchSearchingProduct(value);
+                                  fetchPriceSearch(int.parse(value));
+                                });
+                              },
+                              style: GoogleFonts.dmSans(),
+                              decoration: InputDecoration(
+                                contentPadding: EdgeInsets.only(bottom: 10),
+                                enabledBorder: UnderlineInputBorder(
+                                  borderRadius: BorderRadius.zero,
+                                  borderSide: BorderSide(
+                                      color: Color.fromRGBO(22, 2, 105, 1),
+                                      width: 1.7),
+                                ),
+                                focusedBorder: UnderlineInputBorder(
+                                  borderRadius: BorderRadius.zero,
+                                  borderSide: BorderSide(
+                                      color: Color.fromRGBO(22, 2, 105, 1),
+                                      width: 1.7),
+                                ),
+                                hintText: "Search",
+                                hintStyle: GoogleFonts.dmSans(
+                                    color: Colors.grey.shade500,
+                                    fontSize: 15,
+                                    letterSpacing: 1),
                               ),
-                              focusedBorder: UnderlineInputBorder(
-                                borderRadius: BorderRadius.zero,
-                                borderSide: BorderSide(
-                                    color: Colors.blueAccent, width: 1.7),
-                              ),
-                              hintText: "Search your daily product",
-                              hintStyle: GoogleFonts.dmSans(
-                                  color: Colors.grey.shade500, fontSize: 13),
-
-                              // prefixIcon: Icon(
-                              //   Icons.search,
-                              //   color: Colors.black,
-                              // ),
-                              // suffixIcon: IconButton(
-                              //   icon: Icon(
-                              //     Icons.cancel,
-                              //     color: Colors.grey.withOpacity(0.5),
-                              //   ),
-                              //   onPressed: () {
-                              //     setState(() {
-                              //       fetchMicroProducts();
-                              //       customSearchBar = Text(
-                              //         "All Products",
-                              //         style: GoogleFonts.aBeeZee(
-                              //             color: Color.fromRGBO(22, 2, 105, 1),
-                              //             fontWeight: FontWeight.bold),
-                              //       );
-                              //     });
-                              //   },
-                              // ),
                             ),
                           ),
                         ),
                       ),
-                    ),
-                  ],
-                );
-              }
-              // else{
-              //   this.customSearchBar = Text("All Products",style: GoogleFonts.openSans(color: Color.fromRGBO(22, 2, 105, 1)),);
-              // }
-            });
+                    ],
+                  );
+                }
+              },
+            );
           },
         ),
-        PopupMenuItem(
-          child: InkWell(
-            onTap: () {
-              debugPrint("Button Pressed");
-              Navigator.pop(context);
-              setState(() {
-                category = "";
-                isSwitched = false;
-                showDialogForDownloadOption(context);
-
-                // createPdf();
-              });
-            },
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Icon(
-                  Icons.download,
-                  color: Color.fromRGBO(22, 2, 105, 1),
-                ),
-                Text("Download",
-                    style: GoogleFonts.openSans(
-                        color: Color.fromRGBO(22, 2, 105, 1))),
-              ],
-            ),
-          ),
-        ),
+        // PopupMenuItem(
+        //   child: InkWell(
+        //     onTap: () {
+        //       debugPrint("Button Pressed");
+        //       Navigator.pop(context);
+        //       setState(() {
+        //         category = "";
+        //         isSwitched = false;
+        //         showDialogForDownloadOption(context);
+        //
+        //         // createPdf();
+        //       });
+        //     },
+        //     child: Row(
+        //       mainAxisAlignment: MainAxisAlignment.start,
+        //       children: [
+        //         Icon(
+        //           Icons.download,
+        //           color: Color.fromRGBO(22, 2, 105, 1),
+        //         ),
+        //         Text("Download",
+        //             style: GoogleFonts.openSans(
+        //                 color: Color.fromRGBO(22, 2, 105, 1))),
+        //       ],
+        //     ),
+        //   ),
+        // ),
         PopupMenuItem(
           child: InkWell(
             onTap: () {
@@ -451,7 +435,10 @@ class _ProductsState extends State<Products> {
                   Icons.filter_list,
                   color: Color.fromRGBO(22, 2, 105, 1),
                 ),
-                Text("Filter",
+                SizedBox(
+                  width: 5,
+                ),
+                Text("Apply Filter",
                     style: GoogleFonts.openSans(
                         color: Color.fromRGBO(22, 2, 105, 1))),
               ],
@@ -489,22 +476,88 @@ class _ProductsState extends State<Products> {
     }
   }
 
-  void updateProgressNew() {
-    const oneSec = const Duration(seconds: 1);
-    new Timer.periodic(oneSec, (Timer t) {
-      if (!mounted) return;
-
-      setState(() {
-        progress += 0.1;
-        // we "finish" downloading here
-        if (progress.toStringAsFixed(1) == '1.0') {
-          isLoadingPdf = false;
-          t.cancel();
-          return;
-        }
-      });
-    });
+  showDilogE({BuildContext context, int index}) {
+    return showDialog(
+      context: context,
+      builder: (context) => Container(
+        width: MediaQuery.of(context).size.width / 1.2,
+        child: AlertDialog(
+          insetPadding: EdgeInsets.all(10),
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            "Are you sure you want remove this items?",
+            style: GoogleFonts.aBeeZee(fontSize: 14),
+          ),
+          actions: [
+            Container(
+              child: ElevatedButton(
+                style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all(
+                  Colors.white,
+                )),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text(
+                  "Cancel",
+                  style: GoogleFonts.dmSans(
+                    color: Color.fromRGBO(255, 78, 91, 1),
+                  ),
+                ),
+              ),
+              decoration: BoxDecoration(
+                border: Border.all(
+                    color: Color.fromRGBO(255, 78, 91, 1), width: 1.5),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              height: 40,
+            ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: ElevatedButton(
+                onPressed: () {
+                  setState(() {
+                    mp.response[index].inFavorits = false;
+                  });
+                  ApiServices()
+                      .addAndDeleteToFavourite(mp.response[index].productId);
+                  Navigator.pop(context);
+                },
+                child: Text(
+                  "Remove",
+                  style: GoogleFonts.dmSans(color: Colors.white),
+                ),
+                style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all(
+                  Color.fromRGBO(255, 78, 91, 1),
+                )),
+              ),
+              height: 40,
+            ),
+          ],
+        ),
+      ),
+    );
   }
+
+  // void updateProgressNew() {
+  //   const oneSec = const Duration(seconds: 1);
+  //   new Timer.periodic(oneSec, (Timer t) {
+  //     if (!mounted) return;
+  //
+  //     setState(() {
+  //       progress += 0.1;
+  //       // we "finish" downloading here
+  //       if (progress.toStringAsFixed(1) == '1.0') {
+  //         isLoadingPdf = false;
+  //         t.cancel();
+  //         return;
+  //       }
+  //     });
+  //   });
+  // }
 
   showDialogForDownloadOption(BuildContext context) {
     showDialog(
@@ -541,7 +594,7 @@ class _ProductsState extends State<Products> {
                               child: Radio(
                                 value: "With Price",
                                 groupValue: category,
-                                activeColor: Color.fromRGBO(4, 75, 90, 1),
+                                activeColor: Color.fromRGBO(255, 78, 91, 1),
                                 materialTapTargetSize:
                                     MaterialTapTargetSize.shrinkWrap,
                                 onChanged: (value) async {
@@ -571,7 +624,7 @@ class _ProductsState extends State<Products> {
                               child: Radio(
                                 value: "Without Price",
                                 groupValue: category,
-                                activeColor: Color.fromRGBO(4, 75, 90, 1),
+                                activeColor: Color.fromRGBO(255, 78, 91, 1),
                                 materialTapTargetSize:
                                     MaterialTapTargetSize.shrinkWrap,
                                 onChanged: (value) {
@@ -609,9 +662,9 @@ class _ProductsState extends State<Products> {
                                 });
                               },
                               value: isSwitched,
-                              activeColor: Color.fromRGBO(4, 75, 90, 1),
-                              activeTrackColor:
-                                  Color.fromRGBO(4, 75, 90, 1).withOpacity(0.4),
+                              activeColor: Color.fromRGBO(255, 78, 91, 1),
+                              activeTrackColor: Color.fromRGBO(255, 78, 91, 1)
+                                  .withOpacity(0.4),
                               inactiveThumbColor: Colors.white,
                               inactiveTrackColor: Colors.grey.shade400,
                             ),
@@ -631,53 +684,44 @@ class _ProductsState extends State<Products> {
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(
                                     width: 1.2,
-                                    color: Color.fromRGBO(4, 75, 90, 1),
+                                    color: Color.fromRGBO(255, 78, 91, 1),
                                   ),
                                 ),
                                 child: Text("CANCEL")),
                           ),
                           GestureDetector(
                             onTap: () async {
-                              Navigator.pop(context);
-
                               if (isSwitched == false &&
                                   category == "With Price") {
-                                setState(() {
-                                  isLoadingPdf = true;
-                                  updateProgressNew();
-                                });
+                                setState(() {});
                                 // var temDir = await getTemporaryDirectory();
-                                await ApiServices().downloadPdfWithPrice(
+                                openAndCloseLoadingDialog(context: context);
+
+                                ApiServices().downloadPdfWithPrice(
                                     context, "on", "on",
                                     stepProgress: updateProgress);
                               } else if (category == "Without Price" &&
                                   isSwitched == false) {
-                                setState(() {
-                                  isLoadingPdf = true;
-                                  updateProgressNew();
-                                });
-                                await ApiServices().downloadPdfWithPrice(
+                                openAndCloseLoadingDialog(context: context);
+                                setState(() {});
+                                ApiServices().downloadPdfWithPrice(
                                     context, "off", "on",
                                     stepProgress: updateProgress);
                               } else if (isSwitched == true &&
                                   category == "With Price") {
-                                setState(() {
-                                  isLoadingPdf = true;
-                                  updateProgressNew();
-                                });
-                                await ApiServices().downloadPdfWithPrice(
+                                setState(() {});
+                                ApiServices().downloadPdfWithPrice(
                                     context, "on", "off",
                                     stepProgress: updateProgress);
                               } else if (isSwitched == true &&
                                   category == "Without Price") {
-                                setState(() {
-                                  isLoadingPdf = true;
-                                  updateProgressNew();
-                                });
-                                await ApiServices().downloadPdfWithPrice(
+                                setState(() {});
+
+                                ApiServices().downloadPdfWithPrice(
                                     context, "off", "off",
                                     stepProgress: updateProgress);
                               }
+                              Navigator.of(context).pop();
                             },
                             child: Container(
                               padding: EdgeInsets.only(
@@ -686,7 +730,7 @@ class _ProductsState extends State<Products> {
                                   left: 10, top: 10, bottom: 10),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(4),
-                                color: Color.fromRGBO(4, 75, 90, 1),
+                                color: Color.fromRGBO(255, 78, 91, 1),
                               ),
                               child: Text(
                                 "DOWNLOAD",
@@ -742,7 +786,7 @@ class _ProductsState extends State<Products> {
                               child: Radio(
                                 value: "Top Trending Products",
                                 groupValue: categoryFilter,
-                                activeColor: Color.fromRGBO(4, 75, 90, 1),
+                                activeColor: Color.fromRGBO(255, 78, 91, 1),
                                 materialTapTargetSize:
                                     MaterialTapTargetSize.shrinkWrap,
                                 onChanged: (value) {
@@ -771,7 +815,7 @@ class _ProductsState extends State<Products> {
                               child: Radio(
                                 value: "Out of stock",
                                 groupValue: categoryFilter,
-                                activeColor: Color.fromRGBO(4, 75, 90, 1),
+                                activeColor: Color.fromRGBO(255, 78, 91, 1),
                                 materialTapTargetSize:
                                     MaterialTapTargetSize.shrinkWrap,
                                 onChanged: (value) {
@@ -800,7 +844,7 @@ class _ProductsState extends State<Products> {
                               child: Radio(
                                 value: "In stock",
                                 groupValue: categoryFilter,
-                                activeColor: Color.fromRGBO(4, 75, 90, 1),
+                                activeColor: Color.fromRGBO(255, 78, 91, 1),
                                 materialTapTargetSize:
                                     MaterialTapTargetSize.shrinkWrap,
                                 onChanged: (value) {
@@ -833,7 +877,7 @@ class _ProductsState extends State<Products> {
                                   borderRadius: BorderRadius.circular(4),
                                   border: Border.all(
                                     width: 1.2,
-                                    color: Color.fromRGBO(4, 75, 90, 1),
+                                    color: Color.fromRGBO(255, 78, 91, 1),
                                   ),
                                 ),
                                 child: Text("CANCEL")),
@@ -863,7 +907,7 @@ class _ProductsState extends State<Products> {
                                   left: 10, top: 10, bottom: 10),
                               decoration: BoxDecoration(
                                 borderRadius: BorderRadius.circular(4),
-                                color: Color.fromRGBO(4, 75, 90, 1),
+                                color: Color.fromRGBO(255, 78, 91, 1),
                               ),
                               child: Text(
                                 "Apply",
@@ -886,23 +930,14 @@ class _ProductsState extends State<Products> {
 
   bool isSwitched = false;
 
-  // void toggleSwitch(bool value) {
-  //   if (isSwitched == false) {
-  //     setState(() {
-  //       isSwitched = true;
-  //     });
-  //     print('Switch Button is ON');
-  //   } else {
-  //     setState(() {
-  //       isSwitched = false;
-  //     });
-  //     print('Switch Button is OFF');
-  //   }
-  // }
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
+      GlobalKey<RefreshIndicatorState>();
 
   String category = "";
 
   String categoryFilter = "";
+
+  List<bool> isActiveCateWithColor = [];
 
   // List<AddFavoriteWithId> changeInFavourite = [];
 
@@ -912,7 +947,6 @@ class _ProductsState extends State<Products> {
 
   @override
   Widget build(BuildContext context) {
-    var movies = context.watch<StoreListBoolProvider>().movies;
     return Scaffold(
       appBar: AppBar(
         elevation: 0,
@@ -932,7 +966,7 @@ class _ProductsState extends State<Products> {
                         color: Color.fromRGBO(22, 2, 105, 1),
                         onPressed: () {
                           setState(() {
-                            fetchMicroProducts();
+                            // ProductControllerGetx.to.microProductsGetx(context);
                             isActiveSearchBar = false;
                             customSearchBar = Text(
                               "All Products",
@@ -958,64 +992,71 @@ class _ProductsState extends State<Products> {
         ],
       ),
       backgroundColor: Colors.white,
-      body: isLoading == false
-          ? Center(
-              child: CircularProgressIndicator(),
-            )
-          : Column(
-              children: [
-                SizedBox(
-                  height: 8,
-                ),
-                widget.number == 5
-                    ? Container()
-                    : Expanded(
-                        flex: 0,
-                        child: Container(
-                          color: Colors.white,
-                          width: MediaQuery.of(context).size.width,
-                          height: MediaQuery.of(context).size.height / 7.9,
-                          child: Row(
-                            children: [
-                              Expanded(
-                                flex: 1,
-                                child: ListView.builder(
-                                  itemCount:
-                                      hcc == null ? 0 : hcc.catList.length + 1,
-                                  scrollDirection: Axis.horizontal,
-                                  itemBuilder: (context, index) {
-                                    return Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Row(
-                                          children: [
-                                            SizedBox(
-                                              width: 18,
-                                            ),
-                                            index == 0
-                                                ? GestureDetector(
-                                                    onTap: () {
-                                                      setState(() {
-                                                        fetchMicroProducts();
-                                                      });
-                                                    },
-                                                    child: Container(
-                                                      height: 50,
-                                                      width: 50,
-                                                      decoration: BoxDecoration(
-                                                        // color: Colors
-                                                        //     .grey.shade200,
-                                                        image: DecorationImage(
-                                                          image: AssetImage(
-                                                              "assets/all-product-new.png"),
-                                                        ),
-                                                        shape: BoxShape.circle,
+      body: RefreshIndicator(
+        onRefresh: () {
+          return ApiServices().microProducts(context);
+        },
+        key: _refreshIndicatorKey,
+        child: isLoading == false
+            ? Center(
+                child: CircularProgressIndicator(),
+              )
+            : mp == null && hcc == null
+                ? Center(
+                    child: CircularProgressIndicator(),
+                  )
+                : Column(
+                    children: [
+                      SizedBox(
+                        height: 8,
+                      ),
+                      widget.number == 5
+                          ? Container()
+                          : SizedBox(
+                              width: MediaQuery.of(context).size.width,
+                              height: MediaQuery.of(context).size.height / 8,
+                              child: ListView.builder(
+                                itemCount: hcc.catList.isEmpty
+                                    ? 0
+                                    : hcc.catList.length + 1,
+                                scrollDirection: Axis.horizontal,
+                                itemBuilder: (context, index) {
+                                  return Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Row(
+                                        children: [
+                                          SizedBox(
+                                            width: 18,
+                                          ),
+                                          index == 0
+                                              ? GestureDetector(
+                                                  onTap: () {
+                                                    setState(() {
+                                                      isFirstAllProduct = true;
+                                                      openAndCloseLoadingDialog(
+                                                          context: context);
+                                                      fetchMicroProducts();
+                                                    });
+                                                    Navigator.pop(context);
+                                                  },
+                                                  child: Container(
+                                                    height: 50,
+                                                    width: 50,
+                                                    decoration: BoxDecoration(
+                                                      // color: Colors
+                                                      //     .grey.shade200,
+                                                      image: DecorationImage(
+                                                        image: AssetImage(
+                                                            "assets/category4.png"),
                                                       ),
-                                                      // child: Image.asset("assets/category.png",height: 40,width: 40,),
+                                                      shape: BoxShape.circle,
                                                     ),
-                                                  )
-                                                : GestureDetector(
+                                                    // child: Image.asset("assets/category.png",height: 40,width: 40,),
+                                                  ),
+                                                )
+                                              : GestureDetector(
+                                                  child: Container(
                                                     child: CircleAvatar(
                                                       backgroundImage:
                                                           NetworkImage(
@@ -1026,605 +1067,559 @@ class _ProductsState extends State<Products> {
                                                           Colors.grey[300],
                                                       radius: 25,
                                                     ),
-                                                    onTap: () {
-                                                      fetchSearchingProduct(hcc
-                                                          .catList[index - 1]
-                                                          .name);
-                                                      setState(() {});
-                                                    },
+                                                    decoration: BoxDecoration(
+                                                      border: Border.all(
+                                                        color: makeColorChangeList[
+                                                                    index] ==
+                                                                true
+                                                            ? isFirstAllProduct ==
+                                                                    true
+                                                                ? Color
+                                                                    .fromRGBO(
+                                                                        4,
+                                                                        75,
+                                                                        90,
+                                                                        1)
+                                                                : Color
+                                                                    .fromRGBO(
+                                                                        22,
+                                                                        2,
+                                                                        105,
+                                                                        1)
+                                                            : Color.fromRGBO(
+                                                                4, 75, 90, 1),
+                                                        width: makeColorChangeList[
+                                                                    index] ==
+                                                                true
+                                                            ? isFirstAllProduct ==
+                                                                    true
+                                                                ? 1
+                                                                : 2
+                                                            : 1,
+                                                      ),
+                                                      shape: BoxShape.circle,
+                                                    ),
                                                   ),
-                                            SizedBox(
-                                              width: 16,
-                                            ),
-                                          ],
-                                        ),
-                                        SizedBox(
-                                          height: 8,
-                                        ),
-                                        index == 0
-                                            ? Text(
-                                                "All Product\n",
-                                                style: GoogleFonts.aBeeZee(
+                                                  onTap: () async {
+                                                    isFirstAllProduct = false;
+                                                    for (int i = 0;
+                                                        i <
+                                                            makeColorChangeList
+                                                                .length;
+                                                        i++) {
+                                                      if (makeColorChangeList[
+                                                              i] ==
+                                                          true) {
+                                                        makeColorChangeList[i] =
+                                                            false;
+                                                      } else {
+                                                        makeColorChangeList[i] =
+                                                            false;
+                                                      }
+                                                    }
+                                                    setState(() {
+                                                      makeColorChangeList[
+                                                          index] = true;
+                                                    });
+                                                    print(hcc.catList[index - 1]
+                                                        .name);
+                                                    fetchSearchingProduct(hcc
+                                                        .catList[index - 1]
+                                                        .name);
+
+                                                    setState(() {});
+                                                  },
+                                                ),
+                                          SizedBox(
+                                            width: 16,
+                                          ),
+                                        ],
+                                      ),
+                                      SizedBox(
+                                        height: 8,
+                                      ),
+                                      index == 0
+                                          ? Expanded(
+                                              child: GestureDetector(
+                                                onTap: () {
+                                                  setState(() {
+                                                    isFirstAllProduct = true;
+                                                    openAndCloseLoadingDialog(
+                                                        context: context);
+                                                    fetchMicroProducts();
+                                                  });
+                                                  Navigator.pop(context);
+                                                },
+                                                child: Text(
+                                                  "ALL \nPRODUCT",
+                                                  style: GoogleFonts.dmSans(
                                                     fontSize: 13.4,
-                                                    color: Colors.black),
-                                              )
-                                            : hcc.catList[index - 1].name
-                                                        .split(" ")
-                                                        .length >
-                                                    1
-                                                ? Text(
-                                                    " ${hcc.catList[index - 1].name.split(" ")[0]}\n ${hcc.catList[index - 1].name.split(" ")[1]}",
-                                                    style: GoogleFonts.aBeeZee(
+                                                    color: Colors.black,
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
+                                                  textAlign: TextAlign.center,
+                                                ),
+                                              ),
+                                            )
+                                          : hcc.catList[index - 1].name
+                                                      .split(" ")
+                                                      .length >
+                                                  1
+                                              ? Expanded(
+                                                  child: GestureDetector(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        fetchSearchingProduct(
+                                                            hcc
+                                                                .catList[
+                                                                    index - 1]
+                                                                .name);
+                                                      });
+                                                    },
+                                                    child: Text(
+                                                      " ${hcc.catList[index - 1].name.split(" ")[0]}\n ${hcc.catList[index - 1].name.split(" ")[1]}",
+                                                      style: GoogleFonts.dmSans(
                                                         fontSize: 13.4,
-                                                        color: Colors.black),
-                                                    textAlign: TextAlign.center,
-                                                  )
-                                                : Text(
-                                                    "${hcc.catList[index - 1].name}\n"),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                SizedBox(
-                  height: 2,
-                ),
-                progressString == "Downloaded"
-                    ? isDownloadedText
-                        ? Padding(
-                            padding: const EdgeInsets.only(left: 7, right: 7),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text("Downloaded Successfully"),
-                                Text("100%"),
-                              ],
-                            ),
-                          )
-                        : Container()
-                    : Padding(
-                        padding: const EdgeInsets.only(left: 7, right: 7),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            isLoadingPdf == true
-                                ? Text("Downloading in progress..")
-                                : Container(),
-                            Text(progressString),
-                          ],
-                        ),
-                      ),
-                isLoadingPdf == true
-                    ? Flexible(
-                        flex: 1,
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 7,
-                            ),
-                            Flexible(
-                              flex: 1,
-                              child: LinearProgressIndicator(
-                                backgroundColor: Colors.grey.shade300,
-                                valueColor: new AlwaysStoppedAnimation<Color>(
-                                    Color.fromRGBO(22, 2, 105, 1)),
-                                value: progress,
-                              ),
-                            ),
-                            SizedBox(
-                              width: 5,
-                            ),
-                            progressString != "Downloaded"
-                                ? Container()
-                                : Row(
-                                    children: [
-                                      TextButton(
-                                        onPressed: () {
-                                          OpenFile.open("$filePathForOpenFile");
-                                        },
-                                        child: Text(
-                                          "View",
-                                          style: GoogleFonts.dmSans(
-                                              color:
-                                                  Color.fromRGBO(22, 2, 105, 1),
-                                              fontWeight: FontWeight.w500),
-                                        ),
-                                        // style: ButtonStyle(
-                                        //   backgroundColor: Color.fromRGBO(22, 2, 105, 1)
-                                        // ),
-                                      ),
-                                      SizedBox(
-                                        width: 2,
-                                      ),
-                                      GestureDetector(
-                                          onTap: () {
-                                            setState(() {
-                                              isLoadingPdf = false;
-                                              isDownloadedText = false;
-                                            });
-                                          },
-                                          child: Icon(Icons.close)),
-                                      SizedBox(
-                                        width: 7,
-                                      ),
+                                                        color: Colors.black,
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                      textAlign:
+                                                          TextAlign.center,
+                                                    ),
+                                                  ),
+                                                )
+                                              : Expanded(
+                                                  child: GestureDetector(
+                                                    onTap: () {
+                                                      setState(() {
+                                                        fetchSearchingProduct(
+                                                            hcc
+                                                                .catList[
+                                                                    index - 1]
+                                                                .name);
+                                                      });
+                                                      Navigator.pop(context);
+                                                    },
+                                                    child: Text(
+                                                        "${hcc.catList[index - 1].name}\n",
+                                                        style:
+                                                            GoogleFonts.dmSans(
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                        ),
+                                                        textAlign:
+                                                            TextAlign.center),
+                                                  ),
+                                                ),
                                     ],
-                                  ),
-                          ],
-                        ),
-                      )
-                    : Container(),
-                isLoading == true  && numberProduct != 0
-                    ? mp != null
-                        ? Expanded(
-                            flex: 12,
-                            // height: MediaQuery.of(context).size.height / 1.05,
-                            child: Container(
-                              child: ListView.builder(
-                                itemCount: mp == null ? 0 : mp.response.length,
-                                shrinkWrap: true,
-                                scrollDirection: Axis.vertical,
-                                itemBuilder: (context, index) {
-                                  // String storeLastResponse = mp.response[index].productId;
-                                  print(mp.response.length);
-                                  return mainProductFunc(index, movies);
+                                  );
                                 },
                               ),
                             ),
-                          )
-                        : Container()
-                    : Align(
-                        alignment: Alignment.center,
-                        child: Padding(
-                          padding: EdgeInsets.only(
-                            top: MediaQuery.of(context).size.height / 4,
-                            // bottom: MediaQuery.of(context).size.height / ,
-                          ),
-                          child: Container(
-                            child: Text("No Product Available",style: GoogleFonts.dmSans(fontSize: 16),),
-                          ),
+                      SizedBox(
+                        height: 5,
+                      ),
+                      Expanded(
+                        child: ListView(
+                          children: [
+                            SizedBox(
+                              height: 5,
+                            ),
+                            isLoading == true && numberProduct != 0
+                                ? mp.response.length == 0
+                                    ? Center(
+                                        child: CircularProgressIndicator(),
+                                      )
+                                    : ListView.builder(
+                                        shrinkWrap: true,
+                                        physics: ScrollPhysics(),
+                                        itemCount: mp.response == null
+                                            ? 0
+                                            : mp.response.length,
+                                        itemBuilder: (context, index) {
+                                          return Column(
+                                            children: [
+                                              InkWell(
+                                                onTap: () {
+                                                  productId = mp.response[index]
+                                                      .productId;
+                                                  Navigator.of(context).push(
+                                                    MaterialPageRoute(
+                                                      builder: (context) =>
+                                                          ProductDetails(
+                                                        productId: productId,
+                                                        productFunc:
+                                                            fetchMicroProducts,
+                                                        number: 0,
+                                                      ),
+                                                    ),
+                                                  );
+
+                                                  debugPrint(
+                                                      "Product Id Of Product : $productId");
+                                                  setState(() {});
+                                                },
+                                                child: Row(
+                                                  mainAxisAlignment:
+                                                      MainAxisAlignment.start,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    SizedBox(
+                                                      width: 6,
+                                                    ),
+                                                    Column(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .start,
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment
+                                                              .start,
+                                                      children: [
+                                                        SizedBox(
+                                                          height: 10,
+                                                        ),
+                                                        GestureDetector(
+                                                          onTap: () {
+                                                            print(
+                                                                "Hello World");
+                                                          },
+                                                          child: Container(
+                                                            width: MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .width /
+                                                                4,
+                                                            height: MediaQuery.of(
+                                                                        context)
+                                                                    .size
+                                                                    .height /
+                                                                9,
+                                                            child:
+                                                                Image.network(
+                                                              "${mp.urls.image}/${mp.response[index].banner.media}",
+                                                            ),
+                                                            decoration:
+                                                                BoxDecoration(
+                                                              border: Border.all(
+                                                                  color: Colors
+                                                                      .grey,
+                                                                  width: 0.8),
+                                                              borderRadius:
+                                                                  BorderRadius
+                                                                      .circular(
+                                                                          6),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                        SizedBox(
+                                                          height: 5,
+                                                        ),
+                                                      ],
+                                                    ),
+                                                    SizedBox(
+                                                      width: 7,
+                                                    ),
+                                                    Flexible(
+                                                      child: Container(
+                                                        child: Stack(
+                                                          children: [
+                                                            Column(
+                                                              mainAxisAlignment:
+                                                                  MainAxisAlignment
+                                                                      .start,
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                                              mainAxisSize:
+                                                                  MainAxisSize
+                                                                      .min,
+                                                              children: [
+                                                                mp.response[index].title
+                                                                            .length >
+                                                                        30
+                                                                    ? RichText(
+                                                                        text:
+                                                                            TextSpan(
+                                                                          children: [
+                                                                            TextSpan(
+                                                                              text: '${mp.response[index].title.toUpperCase()}'.substring(0, 30),
+                                                                              style: GoogleFonts.dmSans(
+                                                                                fontSize: 13,
+                                                                                color: Colors.black,
+                                                                                letterSpacing: 1.3,
+                                                                                fontWeight: FontWeight.bold,
+                                                                              ),
+                                                                            ),
+                                                                            TextSpan(
+                                                                              text: '...',
+                                                                              style: GoogleFonts.dmSans(
+                                                                                fontSize: 13,
+                                                                                color: Colors.black,
+                                                                                letterSpacing: 1,
+                                                                                fontWeight: FontWeight.w600,
+                                                                              ),
+                                                                            ),
+                                                                          ],
+                                                                        ),
+                                                                      )
+                                                                    : Text(
+                                                                        "${mp.response[index].title.toUpperCase()}",
+                                                                        style: GoogleFonts.dmSans(
+                                                                            fontWeight: FontWeight
+                                                                                .bold,
+                                                                            letterSpacing:
+                                                                                1.5,
+                                                                            fontSize:
+                                                                                13,
+                                                                            color:
+                                                                                Colors.black),
+                                                                      ),
+                                                                SizedBox(
+                                                                  height: 5,
+                                                                ),
+                                                                Row(
+                                                                  children: [
+                                                                    Text(
+                                                                      "${mp.response[index].category}",
+                                                                      style: GoogleFonts.dmSans(
+                                                                          letterSpacing: 1.5,
+                                                                          // fontWeight: FontWeight.bold,
+                                                                          fontSize: 12,
+                                                                          color: Colors.grey),
+                                                                    ),
+                                                                    Spacer(),
+                                                                    mp.response[index].stock <=
+                                                                            0
+                                                                        ? Text(
+                                                                            "Out of Stock",
+                                                                            style:
+                                                                                GoogleFonts.dmSans(color: Colors.red),
+                                                                          )
+                                                                        : Container(),
+                                                                    SizedBox(
+                                                                      width: 10,
+                                                                    ),
+                                                                  ],
+                                                                  mainAxisAlignment:
+                                                                      MainAxisAlignment
+                                                                          .start,
+                                                                ),
+                                                                SizedBox(
+                                                                  height: 5,
+                                                                ),
+                                                                Row(
+                                                                  children: [
+                                                                    Text(
+                                                                      "${mp.response[index].cartoon.toString()}/Cartoon | ${mp.response[index].stock <= 0 ? "0" : mp.response[index].stock.toString()} Stock",
+                                                                      style: GoogleFonts
+                                                                          .dmSans(
+                                                                        fontSize:
+                                                                            12,
+                                                                        letterSpacing:
+                                                                            1,
+                                                                      ),
+                                                                    ),
+                                                                  ],
+                                                                ),
+                                                                SizedBox(
+                                                                  height: 5,
+                                                                ),
+                                                                Expanded(
+                                                                  flex: 0,
+                                                                  child: Row(
+                                                                    children: [
+                                                                      Flexible(
+                                                                        flex: 0,
+                                                                        child:
+                                                                            Container(
+                                                                          child:
+                                                                              Row(
+                                                                            children: [
+                                                                              Text(
+                                                                                "Rs.",
+                                                                                style: GoogleFonts.dmSans(fontWeight: FontWeight.bold, color: Colors.black87, letterSpacing: 0.5, fontSize: 13),
+                                                                              ),
+                                                                              Flexible(
+                                                                                flex: 0,
+                                                                                child: (mp.response[index].price % 1) == 0
+                                                                                    ? Text(
+                                                                                        "${mp.response[index].price.toInt().toString()}",
+                                                                                        style: GoogleFonts.dmSans(fontWeight: FontWeight.bold, color: Colors.black87, letterSpacing: 0.5, fontSize: 13),
+                                                                                      )
+                                                                                    : Text(
+                                                                                        "${mp.response[index].price}",
+                                                                                        style: GoogleFonts.dmSans(fontWeight: FontWeight.bold, color: Colors.black87, letterSpacing: 0.5, fontSize: 13),
+                                                                                      ),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                      SizedBox(
+                                                                        width:
+                                                                            5,
+                                                                      ),
+                                                                      Flexible(
+                                                                        flex: 0,
+                                                                        child:
+                                                                            Container(
+                                                                          child:
+                                                                              Row(
+                                                                            mainAxisAlignment:
+                                                                                MainAxisAlignment.start,
+                                                                            children: [
+                                                                              Text(
+                                                                                "Rs.",
+                                                                                style: GoogleFonts.dmSans(letterSpacing: 0.5, color: Colors.grey, fontSize: 13),
+                                                                              ),
+                                                                              Text(
+                                                                                "${mp.response[index].mrp.toInt().toString()}",
+                                                                                style: GoogleFonts.dmSans(decoration: TextDecoration.lineThrough, color: Colors.grey, fontSize: 13),
+                                                                              ),
+                                                                            ],
+                                                                          ),
+                                                                        ),
+                                                                      ),
+                                                                      SizedBox(
+                                                                        width:
+                                                                            4,
+                                                                      ),
+                                                                      Flexible(
+                                                                        flex: 0,
+                                                                        child:
+                                                                            Text(
+                                                                          "${mp.response[index].discountPercentage.toInt().toString()}% OFF",
+                                                                          style: GoogleFonts.dmSans(
+                                                                              color: Colors.green[700],
+                                                                              fontWeight: FontWeight.bold,
+                                                                              fontSize: 13),
+                                                                        ),
+                                                                      ),
+                                                                      Spacer(),
+                                                                      InkWell(
+                                                                        child: mp.response[index].inFavorits ==
+                                                                                true
+                                                                            ? Icon(
+                                                                                Icons.favorite,
+                                                                                color: Colors.red,
+                                                                              )
+                                                                            : storeBoolForFavourite[index] == false
+                                                                                ? Icon(
+                                                                                    Icons.favorite_border,
+                                                                                    color: Colors.black,
+                                                                                  )
+                                                                                : SizedBox(
+                                                                                    height: 20,
+                                                                                    width: 20,
+                                                                                    child: CircularProgressIndicator(
+                                                                                      strokeWidth: 3,
+                                                                                      color: Colors.grey.shade800,
+                                                                                      backgroundColor: Colors.grey.shade400,
+                                                                                    ),
+                                                                                  ),
+                                                                        onTap:
+                                                                            () async {
+                                                                          setState(
+                                                                              () {
+                                                                            storeBoolForFavourite[index] =
+                                                                                true;
+                                                                          });
+                                                                          setState(
+                                                                              () {
+                                                                            if (mp.response[index].inFavorits ==
+                                                                                false) {
+                                                                              Future.delayed(
+                                                                                Duration(seconds: 1),
+                                                                                () {
+                                                                                  setState(() {
+                                                                                    mp.response[index].inFavorits = true;
+                                                                                    ApiServices().addAndDeleteToFavourite(mp.response[index].productId);
+                                                                                  });
+                                                                                  setState(() {
+                                                                                    storeBoolForFavourite[index] = false;
+                                                                                  });
+                                                                                },
+                                                                              );
+                                                                            } else {
+                                                                              storeBoolForFavourite[index] = false;
+                                                                              showDilogE(context: context, index: index);
+                                                                            }
+                                                                          });
+                                                                        },
+                                                                      ),
+                                                                      SizedBox(
+                                                                        width:
+                                                                            20,
+                                                                      ),
+                                                                    ],
+                                                                  ),
+                                                                ),
+                                                                SizedBox(
+                                                                  height: 4,
+                                                                ),
+                                                                Text(
+                                                                  "HSN Code : ${mp.response[index].hsn == null ? '0' : mp.response[index].hsn}-${mp.response[index].gst == null ? '0' : mp.response[index].gst}%",
+                                                                  style: GoogleFonts.dmSans(
+                                                                      color: Colors
+                                                                          .grey,
+                                                                      fontSize:
+                                                                          13,
+                                                                      letterSpacing:
+                                                                          1),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ],
+                                                        ),
+                                                        width: MediaQuery.of(
+                                                                context)
+                                                            .size
+                                                            .width,
+                                                      ),
+                                                      flex: 1,
+                                                      fit: FlexFit.loose,
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              Divider(
+                                                thickness: 0.5,
+                                                color: Colors.grey,
+                                                indent: 10,
+                                                endIndent: 5,
+                                              ),
+                                              if (mp.response.length ==
+                                                  index + 1)
+                                                SizedBox(
+                                                  height: MediaQuery.of(context)
+                                                          .size
+                                                          .height /
+                                                      6.5,
+                                                ),
+                                              // storeIndexResponse.last.toString() != null
+                                              // ? SizedBox(height: 100,)
+                                              //     : SizedBox(
+                                              //   height: 0,
+                                              // ),
+                                            ],
+                                          );
+                                        },
+                                      )
+                                : Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
+                          ],
                         ),
                       ),
-              ],
-            ),
+                    ],
+                  ),
+      ),
     );
   }
 
   bool isDownloadedText = true;
-
-  Widget mainProductFunc(int index, List<IncrementNumber> movies) {
-    return Column(
-      children: [
-        InkWell(
-          onTap: () {
-            productId = mp.response[index].productId;
-            Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) => ProductDetails(
-                productId: mp.response[index].productId,
-                productFunc: fetchMicroProducts,
-                number: 0,
-              ),
-            ));
-            ApiServices().microProductDetails(productId, context);
-            debugPrint("Product Id Of Product : $productId");
-            setState(() {});
-          },
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              SizedBox(
-                width: 6,
-              ),
-              Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // SizedBox(
-                  //   height: 10,
-                  // ),
-                  GestureDetector(
-                    onTap: () {
-                      print("Hello World");
-                    },
-                    child: Container(
-                      width: MediaQuery.of(context).size.width / 4,
-                      height: MediaQuery.of(context).size.height / 9,
-                      child: Image.network(
-                        "${mp.urls.image}/${mp.response[index].banner.media}",
-                      ),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey, width: 0.8),
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                    ),
-                  ),
-                  SizedBox(
-                    height: 5,
-                  ),
-                ],
-              ),
-              SizedBox(
-                width: 7,
-              ),
-              Flexible(
-                child: Container(
-                  child: Stack(
-                    children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          mp.response[index].title.length > 30
-                              ? Text(
-                                  "${mp.response[index].title.toUpperCase()}...",
-                                  style: GoogleFonts.dmSans(
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.5,
-                                      fontSize: 13,
-                                      color: Colors.black),
-                                )
-                              : Text(
-                                  "${mp.response[index].title.toUpperCase()}",
-                                  style: GoogleFonts.dmSans(
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 1.5,
-                                      fontSize: 13,
-                                      color: Colors.black),
-                                ),
-                          SizedBox(
-                            height: 5,
-                          ),
-                          Row(
-                            children: [
-                              Text(
-                                "${mp.response[index].category}",
-                                style: GoogleFonts.dmSans(
-                                    letterSpacing: 1.5,
-                                    // fontWeight: FontWeight.bold,
-                                    fontSize: 12,
-                                    color: Colors.grey),
-                              ),
-                              Spacer(),
-                              mp.response[index].stock <= 0
-                                  ? Text(
-                                      "Out of Stock",
-                                      style:
-                                          GoogleFonts.dmSans(color: Colors.red),
-                                    )
-                                  : Container(),
-                              // mp.response[index].stock <= 0
-                              //     ? Text(
-                              //         "Out of Stock",
-                              //         style:
-                              //             GoogleFonts.dmSans(color: Colors.red),
-                              //       )
-                              //     : dataIncrement[index].isVisible
-                              //         ? GestureDetector(
-                              //             onTap: () {
-                              //               print("Hello World");
-                              //             },
-                              //             child: Container(
-                              //               child: Row(
-                              //                 children: [
-                              //                   GestureDetector(
-                              //                       onTap: () async {
-                              //                         await ApiServices()
-                              //                             .decrementProducts(
-                              //                                 mp.response[index]
-                              //                                     .productId,
-                              //                                 1,
-                              //                                 context);
-                              //                         setState(() {
-                              //                           ApiServices()
-                              //                               .microProducts(
-                              //                                   context);
-                              //                         });
-                              //                         if (dataIncrement[index]
-                              //                                 .counter <
-                              //                             2) {
-                              //                           dataIncrement[index]
-                              //                                   .isVisible =
-                              //                               !dataIncrement[
-                              //                                       index]
-                              //                                   .isVisible;
-                              //                         } else {
-                              //                           dataIncrement[index]
-                              //                               .counter--;
-                              //                         }
-                              //                         debugPrint(
-                              //                             "Decrement che : ${dataIncrement[index].counter}");
-                              //                         fetchMicroProducts();
-                              //                         // Fluttertoast.showToast(msg: "Product Decrement : ${dataIncrement[index].counter--}");
-                              //                       },
-                              //                       child: Padding(
-                              //                         padding:
-                              //                             const EdgeInsets.only(
-                              //                                 right: 10,
-                              //                                 left: 7),
-                              //                         child: Icon(
-                              //                           Icons.remove,
-                              //                           size: 20,
-                              //                         ),
-                              //                       )),
-                              //                   SizedBox(
-                              //                     width: 5,
-                              //                   ),
-                              //                   Text(
-                              //                     "${dataIncrement[index].counter.toString()}",
-                              //                     style: TextStyle(
-                              //                         fontWeight:
-                              //                             FontWeight.bold),
-                              //                   ),
-                              //                   SizedBox(
-                              //                     width: 5,
-                              //                   ),
-                              //                   GestureDetector(
-                              //                       onTap: () {
-                              //                         setState(() {
-                              //                           dataIncrement[index]
-                              //                               .counter++;
-                              //                           ApiServices()
-                              //                               .incrementProducts(
-                              //                                   mp
-                              //                                       .response[
-                              //                                           index]
-                              //                                       .productId,
-                              //                                   1);
-                              //                         });
-                              //                         ApiServices()
-                              //                             .microProducts(
-                              //                                 context);
-                              //                         fetchMicroProducts();
-                              //                         debugPrint(
-                              //                             "Increment che : ${dataIncrement[index].counter}");
-                              //                         // fetchMicroProducts();
-                              //                       },
-                              //                       child: Padding(
-                              //                         padding:
-                              //                             const EdgeInsets.only(
-                              //                                 right: 7,
-                              //                                 left: 10),
-                              //                         child: Icon(
-                              //                           Icons.add,
-                              //                           size: 20,
-                              //                         ),
-                              //                       )),
-                              //                   SizedBox(
-                              //                     width: 3,
-                              //                   ),
-                              //                 ],
-                              //                 mainAxisAlignment:
-                              //                     MainAxisAlignment
-                              //                         .spaceBetween,
-                              //               ),
-                              //               decoration: BoxDecoration(
-                              //                 borderRadius:
-                              //                     BorderRadius.circular(2),
-                              //                 border: Border.all(
-                              //                     color: Color.fromRGBO(
-                              //                         22, 2, 105, 1)),
-                              //               ),
-                              //               // width: 90,
-                              //             ),
-                              //           )
-                              //         : InkWell(
-                              //             onTap: () {
-                              //               setState(() {
-                              //                 dataIncrement[index].counter = 1;
-                              //               });
-                              //               ApiServices()
-                              //                   .getWishListProducts(context);
-                              //
-                              //               ApiServices().incrementProducts(
-                              //                   mp.response[index].productId,
-                              //                   dataIncrement[index].counter);
-                              //
-                              //               dataIncrement[index].isVisible =
-                              //                   !dataIncrement[index].isVisible;
-                              //               fetchMicroProducts();
-                              //             },
-                              //             child: Container(
-                              //               width: 100,
-                              //               decoration: BoxDecoration(
-                              //                 borderRadius:
-                              //                     BorderRadius.circular(2),
-                              //                 border: Border.all(
-                              //                     color: Color.fromRGBO(
-                              //                         22, 2, 105, 1)),
-                              //               ),
-                              //               child: Text(
-                              //                 "ADD",
-                              //                 style: TextStyle(
-                              //                     fontWeight: FontWeight.bold),
-                              //               ),
-                              //               height: 22,
-                              //               alignment: Alignment.center,
-                              //             ),
-                              //           ),
-                              SizedBox(
-                                width: 10,
-                              ),
-                            ],
-                            mainAxisAlignment: MainAxisAlignment.start,
-                          ),
-                          SizedBox(
-                            height: 5,
-                          ),
-                          Row(
-                            children: [
-                              Text(
-                                "${mp.response[index].cartoon.toString()}/Cartoon | ${mp.response[index].stock <= 0 ? "0" : mp.response[index].stock.toString()} Stock",
-                                style: GoogleFonts.dmSans(
-                                  fontSize: 12,
-                                  letterSpacing: 1,
-                                ),
-                              ),
-                              // Spacer(),
-                              // Padding(
-                              //   padding: const EdgeInsets.only(right: 25),
-                              //   child: dataIncrement[index].priceTotal != 0
-                              //       ? Text(
-                              //           "Rs.${dataIncrement[index].priceTotal.toInt().toString()}"
-                              //               .toString(),
-                              //           style: GoogleFonts.dmSans(
-                              //               fontWeight: FontWeight.bold),
-                              //         )
-                              //       : Container(),
-                              // ),
-                            ],
-                          ),
-                          SizedBox(
-                            height: 5,
-                          ),
-                          Expanded(
-                            flex: 0,
-                            child: Row(
-                              children: [
-                                Flexible(
-                                  flex: 0,
-                                  child: Container(
-                                    child: Row(
-                                      children: [
-                                        Text(
-                                          "Rs.",
-                                          style: GoogleFonts.dmSans(
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.black87,
-                                              letterSpacing: 0.5,
-                                              fontSize: 13),
-                                        ),
-                                        Flexible(
-                                          flex: 0,
-                                          child: Text(
-                                            "${mp.response[index].price.toInt().toString()}",
-                                            style: GoogleFonts.dmSans(
-                                                fontWeight: FontWeight.bold,
-                                                color: Colors.black87,
-                                                letterSpacing: 0.5,
-                                                fontSize: 13),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: 5,
-                                ),
-                                Flexible(
-                                  flex: 0,
-                                  child: Container(
-                                    child: Row(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Rs.",
-                                          style: GoogleFonts.dmSans(
-                                              letterSpacing: 0.5,
-                                              color: Colors.grey,
-                                              fontSize: 13),
-                                        ),
-                                        Text(
-                                          "${mp.response[index].mrp.toInt().toString()}",
-                                          style: GoogleFonts.dmSans(
-                                              decoration:
-                                                  TextDecoration.lineThrough,
-                                              color: Colors.grey,
-                                              fontSize: 13),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                                SizedBox(
-                                  width: 4,
-                                ),
-                                Flexible(
-                                  flex: 0,
-                                  child: Text(
-                                    "${mp.response[index].discountPercentage.toInt().toString()}% OFF",
-                                    style: GoogleFonts.dmSans(
-                                        color: Colors.green[700],
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13),
-                                  ),
-                                ),
-                                Spacer(),
-                                InkWell(
-                                  child: mp.response[index].inFavorits == true
-                                      ? Icon(
-                                          Icons.favorite,
-                                          color: Colors.red,
-                                        )
-                                      : Icon(
-                                          Icons.favorite_border,
-                                          color: Colors.black,
-                                        ),
-                                  onTap: () async {
-                                    setState(() {
-                                      if (mp.response[index].inFavorits ==
-                                          false) {
-                                        mp.response[index].inFavorits = true;
-                                      } else {
-                                        mp.response[index].inFavorits = false;
-                                      }
-                                    });
-                                    ApiServices().addAndDeleteToFavourite(
-                                        mp.response[index].productId);
-                                  },
-                                ),
-                                SizedBox(
-                                  width: 20,
-                                ),
-                              ],
-                            ),
-                          ),
-                          SizedBox(
-                            height: 4,
-                          ),
-                          Text(
-                            "HSN Code : ${mp.response[index].hsn == null ? '0' : mp.response[index].hsn}-${mp.response[index].gst == null ? '0' : mp.response[index].gst}%",
-                            style: GoogleFonts.dmSans(
-                                color: Colors.grey,
-                                fontSize: 13,
-                                letterSpacing: 1),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  width: MediaQuery.of(context).size.width,
-                ),
-                flex: 1,
-                fit: FlexFit.loose,
-              ),
-            ],
-          ),
-        ),
-        Divider(
-          thickness: 0.5,
-          color: Colors.grey,
-          indent: 10,
-          endIndent: 5,
-        ),
-        if (mp.response.length == index + 1)
-          SizedBox(
-            height: MediaQuery.of(context).size.height / 6.5,
-          ),
-        // storeIndexResponse.last.toString() != null
-        // ? SizedBox(height: 100,)
-        //     : SizedBox(
-        //   height: 0,
-        // ),
-      ],
-    );
-  }
 
   addToWishList(String id) async {
     await Future.delayed(Duration(seconds: 1), () async {

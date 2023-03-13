@@ -8,18 +8,18 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:38162620755:android:01e7894f938a1c3a87c1a6",
+        "mobilesdk_app_id": "1:38162620755:android:d02ec09c2558a78487c1a6",
         "android_client_info": {
-          "package_name": "com.example.jalaram"
+          "package_name": "com.deluxe.jalaram"
         }
       },
       "oauth_client": [
         {
-          "client_id": "38162620755-57hi74dmooago4uvv9fciic7dpibeh5e.apps.googleusercontent.com",
+          "client_id": "38162620755-cphcj9kulokrtrcdm6gbq69vofik1dof.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
-            "package_name": "com.example.jalaram",
-            "certificate_hash": "729d482e205a9f31d656cbd3f3c8b183fbcfccef"
+            "package_name": "com.deluxe.jalaram",
+            "certificate_hash": "6e557f55e2660cf42cb1872ad1a09709b7603915"
           }
         },
         {

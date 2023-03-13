@@ -55,26 +55,40 @@ class _NotificationPageState extends State<NotificationPage> {
                 ],
               ),
             ),
-            Expanded(
-              child: ListView.builder(
-                itemCount: lengthOfNotify,
-                itemBuilder: (context, index) {
-                  return Column(
-                    children: [
-                      ListTile(
-                        leading: Image.asset(
-                          "assets/bell.jpeg",
-                          height: 35,
-                          width: 35,
-                        ),
-                        title: Text(messageOfNotify[index]),
-                      ),
-                      Divider(),
-                    ],
-                  );
-                },
+
+            SizedBox(
+              height: MediaQuery.of(context).size.height/2.5,
+            ),
+
+            Align(
+              alignment: Alignment.center,
+              child: Text(
+                "No any notification found",
+                style: GoogleFonts.aBeeZee(
+                    color: Colors.black, fontSize: 13, letterSpacing: 0.5),
               ),
             ),
+
+            // Expanded(
+            //   child: ListView.builder(
+            //     itemCount: lengthOfNotify,
+            //     itemBuilder: (context, index) {
+            //       return Column(
+            //         children: [
+            //           ListTile(
+            //             leading: Image.asset(
+            //               "assets/bell.jpeg",
+            //               height: 35,
+            //               width: 35,
+            //             ),
+            //             title: Text(messageOfNotify[index]),
+            //           ),
+            //           Divider(),
+            //         ],
+            //       );
+            //     },
+            //   ),
+            // ),
           ],
         ),
       ),

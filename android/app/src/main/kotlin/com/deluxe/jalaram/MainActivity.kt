@@ -1,4 +1,4 @@
-package com.example.jalaram
+package com.deluxe.jalaram
 
 import io.flutter.embedding.android.FlutterActivity
 

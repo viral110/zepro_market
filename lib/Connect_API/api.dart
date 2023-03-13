@@ -1,9 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:jalaram/Data_Provider/favourite_provider.dart';
+import 'package:jalaram/Model/get_current_order_details_model.dart';
 import 'package:jalaram/Model/get_feed_back_user.dart';
 import 'package:jalaram/Model/get_profile_image.dart';
 import 'package:jalaram/Model/local_database.dart';
@@ -36,11 +38,12 @@ import 'package:jalaram/Model/notification_model.dart';
 import 'package:jalaram/Model/price_counter_model.dart';
 import 'package:jalaram/Model/searching_product_model.dart';
 import 'package:jalaram/Model/token.dart';
-import 'package:open_file/open_file.dart';
+
 import 'package:path_provider/path_provider.dart';
 import 'package:provider/provider.dart';
 import '../Data_Provider/store_list_bool.dart';
 import '../Home/bottomnavbar.dart';
+import '../Splash_Screen/internet_connection_page.dart';
 import '../add_to_cart_part/confirm_order.dart';
 import 'package:dio/dio.dart';
 
@@ -75,10 +78,55 @@ class ApiServices {
         if (response.statusCode == 200) {
           print(decoded);
           Fluttertoast.showToast(msg: "Login OTP sent");
+
           Navigator.push(
               context,
               MaterialPageRoute(
                 builder: (context) => LoginOTPPage(phoneNum: mobileNum),
+              ));
+        } else {
+          Fluttertoast.showToast(msg: decoded['type']);
+        }
+      } else {
+        Fluttertoast.showToast(msg: "No Internet");
+      }
+    } catch (e) {
+      debugPrint("Error Is : $e");
+      // Fluttertoast.showToast(msg: "Something went Wrong");
+    }
+  }
+
+  Future loginForGoogleDevelop(String mobileNum, BuildContext context) async {
+    try {
+      final result = await InternetAddress.lookup("google.com");
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        var url = Uri.parse(
+            StringHelper.BASE_URL + "api/request_otp?mobile_number=$mobileNum");
+        final response = await http.get(
+          url,
+          headers: {
+            "Accept": "Application/json",
+          },
+        );
+        print(response.body);
+        var decoded = jsonDecode(response.body);
+        if (response.statusCode == 200) {
+          print(decoded);
+          Tokens tokens = Tokens.fromJson(decoded);
+          Provider.of<DataProvider>(context, listen: false)
+              .setTokenData(tokens);
+          await storageKey.write(
+              key: 'access_token', value: tokens.accessToken);
+          await storageKey.write(
+              key: 'refresh_token', value: tokens.refreshToken);
+          await storageKey.write(
+              key: 'new_user', value: tokens.newUser.toString());
+          storeKeyByGet.write('access_token', tokens.accessToken);
+          Fluttertoast.showToast(msg: "Login Successfully");
+          Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BottomNavBar(index: 0,),
               ));
         } else {
           Fluttertoast.showToast(msg: decoded['type']);
@@ -120,10 +168,13 @@ class ApiServices {
               key: 'new_user', value: tokens.newUser.toString());
           storeKeyByGet.write('access_token', tokens.accessToken);
           Fluttertoast.showToast(msg: "Login Successfully");
+          bool isActive = false;
           Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => Register(),
+                builder: (context) => tokens.newUser == true
+                    ? Register(isActive: isActive,)
+                    : BottomNavBar(index: 0),
               ));
         } else {
           Fluttertoast.showToast(msg: decoded['message']);
@@ -160,7 +211,7 @@ class ApiServices {
       String aToken = await storageKey.read(key: 'access_token');
       final result = await InternetAddress.lookup("google.com");
       if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
-        var url = Uri.parse(StringHelper.BASE_URL + "api/product/showcase");
+        var url = Uri.parse(StringHelper.BASE_URL + "api/product/all_showcase");
         final response = await http.get(url, headers: {
           "Accept": "Application/json",
           'Authorization':
@@ -177,11 +228,12 @@ class ApiServices {
         } else if (response.statusCode == 401) {
           getRefreshToken();
         } else {
+
           debugPrint("${decoded['message']}");
           // Fluttertoast.showToast(msg: "${decoded['message']}");
         }
       } else {
-        Fluttertoast.showToast(msg: "No Internet");
+
       }
     } catch (e) {
       // Fluttertoast.showToast(msg: e.toString());
@@ -211,7 +263,7 @@ class ApiServices {
         } else if (response.statusCode == 401) {
           getRefreshToken();
         } else {
-          Fluttertoast.showToast(msg: "${decoded['message']}");
+          // Fluttertoast.showToast(msg: "${decoded['message']}");
         }
       } else {
         Fluttertoast.showToast(msg: "No Internet!!!");
@@ -221,7 +273,9 @@ class ApiServices {
     }
   }
 
-  Future addAndDeleteToFavourite(String productId,) async {
+  Future addAndDeleteToFavourite(
+    String productId,
+  ) async {
     try {
       String aToken = await storageKey.read(key: 'access_token');
       final result = await InternetAddress.lookup("google.com");
@@ -236,7 +290,7 @@ class ApiServices {
         if (response.statusCode == 200) {
           debugPrint("Successfully");
 
-          Fluttertoast.showToast(msg: "add to wishlist");
+          // Fluttertoast.showToast(msg: "add to wishlist");
           // debugPrint("Message Response : ${decoded.toString()}");
         } else if (response.statusCode == 401) {
           getRefreshToken();
@@ -266,7 +320,6 @@ class ApiServices {
         var decoded = jsonDecode(response.body);
         print("viral:$decoded");
         if (response.statusCode == 200) {
-
           GetWishListProducts getWishListProducts =
               GetWishListProducts.fromJson(decoded);
           Provider.of<DataProvider>(context, listen: false)
@@ -290,13 +343,16 @@ class ApiServices {
         } else if (response.statusCode == 401) {
           getRefreshToken();
         } else {
-          Fluttertoast.showToast(msg: "${decoded['message']}");
+
+          Fluttertoast.showToast(msg: "No internet");
+
         }
       } else {
         Fluttertoast.showToast(msg: "No Internet!!!");
       }
     } catch (e) {
       Fluttertoast.showToast(msg: "${e.toString()}");
+
     }
   }
 
@@ -314,7 +370,7 @@ class ApiServices {
         });
         var decoded = jsonDecode(response.body);
         if (response.statusCode == 200) {
-          Fluttertoast.showToast(msg: "Increment available");
+          // Fluttertoast.showToast(msg: "Increment available");
           debugPrint("Increment Available");
         } else if (response.statusCode == 401) {
           getRefreshToken();
@@ -347,12 +403,12 @@ class ApiServices {
         });
         var decoded = jsonDecode(response.body);
         if (response.statusCode == 200) {
-          Fluttertoast.showToast(msg: "Decrement available");
+          // Fluttertoast.showToast(msg: "Decrement available");
           debugPrint("Decrement Available");
         } else if (response.statusCode == 401) {
           getRefreshToken();
         } else {
-          Fluttertoast.showToast(msg: "${decoded['message']}");
+          // Fluttertoast.showToast(msg: "${decoded['message']}");
         }
       } else {
         Fluttertoast.showToast(msg: "No Internet!!!");
@@ -385,7 +441,7 @@ class ApiServices {
           getRefreshToken();
         } else {
           debugPrint(decoded['message'] + "-----------");
-          Fluttertoast.showToast(msg: "${decoded['message']}");
+          // Fluttertoast.showToast(msg: "${decoded['message']}");
         }
       } else {
         Fluttertoast.showToast(msg: "No Internet!!!");
@@ -476,7 +532,7 @@ class ApiServices {
         } else if (response.statusCode == 401) {
           getRefreshToken();
         } else {
-          Fluttertoast.showToast(msg: "${decoded['message']}");
+          // Fluttertoast.showToast(msg: "${decoded['message']}");
         }
       } else {
         Fluttertoast.showToast(msg: "No Internet!!!");
@@ -505,7 +561,7 @@ class ApiServices {
         } else if (response.statusCode == 401) {
           getRefreshToken();
         } else {
-          Fluttertoast.showToast(msg: "${decoded['message']}");
+          // Fluttertoast.showToast(msg: "${decoded['message']}");
         }
       } else {
         Fluttertoast.showToast(msg: "No Internet!!!");
@@ -536,7 +592,7 @@ class ApiServices {
         } else if (response.statusCode == 401) {
           getRefreshToken();
         } else {
-          Fluttertoast.showToast(msg: "${decoded['message']}");
+          // Fluttertoast.showToast(msg: "${decoded['message']}");
         }
       } else {
         Fluttertoast.showToast(msg: "No Internet!!!");
@@ -565,7 +621,7 @@ class ApiServices {
         } else if (response.statusCode == 401) {
           getRefreshToken();
         } else {
-          Fluttertoast.showToast(msg: "${decoded['message']}");
+          // Fluttertoast.showToast(msg: "${decoded['message']}");
         }
       } else {
         Fluttertoast.showToast(msg: "No Internet!!!");
@@ -588,11 +644,11 @@ class ApiServices {
         });
         var decoded = jsonDecode(response.body);
         if (response.statusCode == 200) {
-          Fluttertoast.showToast(msg: "Delete Product");
+          Fluttertoast.showToast(msg: "removed item from cart");
         } else if (response.statusCode == 401) {
           getRefreshToken();
         } else {
-          Fluttertoast.showToast(msg: "${decoded['message']}");
+          // Fluttertoast.showToast(msg: "${decoded['message']}");
         }
       } else {
         Fluttertoast.showToast(msg: "No Internet!!!");
@@ -622,7 +678,7 @@ class ApiServices {
         } else if (response.statusCode == 401) {
           getRefreshToken();
         } else {
-          Fluttertoast.showToast(msg: "${decoded['message']}");
+          // Fluttertoast.showToast(msg: "${decoded['message']}");
         }
       } else {
         Fluttertoast.showToast(msg: "No Internet!!!");
@@ -650,24 +706,12 @@ class ApiServices {
           debugPrint("Successfully");
           String orderId = fetchOrderId.orderId;
 
-          orderIdForGlobal.add(orderId);
-          storageKey.write(key: "orderId", value: jsonEncode(orderIdForGlobal));
-
-          final storeProductId = LocalStoreProductId(
-            productId: fetchOrderId.orderId,
-            createdTime: DateTime.now(),
-          );
-
-          await LocalProductDetailsDataBase.instance.create(storeProductId);
-
-          print(storeProductId);
-
           Fluttertoast.showToast(msg: "Confirm Order");
           Navigator.of(context).push(MaterialPageRoute(
             builder: (context) => ConfirmOrderPage(
-              id: orderId,
+              id: fetchOrderId.orderId,
             ),
-          ));
+          ),);
 
           // debugPrint("Message Response : ${decoded.toString()}");
           return response;
@@ -689,7 +733,7 @@ class ApiServices {
       BuildContext context, String isWithPrice, String withFrontPage,
       {void stepProgress(int remain, int total)}) async {
     Dio dio = Dio();
-
+    BuildContext buildContext;
     Map<String, dynamic> resultMap = {
       'isSuccess': false,
       "filePath": null,
@@ -702,14 +746,7 @@ class ApiServices {
       final result = await InternetAddress.lookup("google.com");
       String pdfName = "";
       if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
-        var url = Uri.parse(StringHelper.BASE_URL +
-            'api/product_pdf?with_price=$isWithPrice&with_front_page=$withFrontPage');
 
-        // final responseNew = await http.Client().send(http.Request("GET", url));
-        // Map<String,String> mapString = {
-        //   'Authorization': 'Bearer $aToken',
-        // };
-        // responseNew.headers.addAll(mapString);
 
         Response response = await dio.request(
           (StringHelper.BASE_URL +
@@ -748,7 +785,10 @@ class ApiServices {
 
         resultMap['filePath'] = file.path;
         filePathForOpenFile = file.path;
+        Navigator.pop(context);
+
         resultMap['isSuccess'] = response.statusCode == 200;
+        Fluttertoast.showToast(msg: "Pdf Download Successfully");
         showNotificationPdf(resultMap);
         return file;
       } else {
@@ -760,6 +800,8 @@ class ApiServices {
       debugPrint("Error in downloadPDF : ${e.toString()}");
     }
   }
+
+
 
   Future showNotificationPdf(Map<String, dynamic> mapdata) async {
     final android = AndroidNotificationDetails("channelId", "channelName",
@@ -802,13 +844,41 @@ class ApiServices {
               GetCurrentOrderHistory.fromJson(decoded);
           Provider.of<DataProvider>(context, listen: false)
               .getCurrentOrderProvider(getCurrentOrderHistory);
-          // return getCurrentOrderHistoryFromJson(decoded);
-          Fluttertoast.showToast(msg: "Fetch Order History");
-          // String orderIdString = await storageKey.read(key: "orderId");
-          // List<dynamic> listofitems = jsonDecode(orderIdString);
-          // print(listofitems);s
-          // print(data.response[orderIdForGlobal[0]][0].markDatetime);
-          // print(orderIdForGlobal.length);
+
+          return response;
+        } else if (response.statusCode == 401) {
+          getRefreshToken();
+        } else {
+          // Fluttertoast.showToast(msg: "${decoded['message']}");
+        }
+      } else {
+        Fluttertoast.showToast(msg: "No Internet!!!");
+      }
+    } catch (e) {
+      // Fluttertoast.showToast(msg: "Error in confirmOrder : ${e.toString()}");
+      debugPrint("Error in confirmOrder : ${e.toString()}");
+    }
+  }
+
+  Future getOrderDetails(BuildContext context,String orderId) async {
+    try {
+      String aToken = await storageKey.read(key: 'access_token');
+      final result = await InternetAddress.lookup("google.com");
+      if (result.isNotEmpty && result[0].rawAddress.isNotEmpty) {
+        var url = Uri.parse(StringHelper.BASE_URL + 'api/get_order_by_id?order_id=$orderId');
+        final response = await http.get(url, headers: {
+          "Accept": "Application/json",
+          'Authorization': 'Bearer $aToken',
+        });
+        var decoded = jsonDecode(response.body);
+        if (response.statusCode == 200) {
+          print("hello");
+          print(decoded);
+
+          OrderDetailsModel orderDetailsModel =
+          OrderDetailsModel.fromJson(decoded);
+          Provider.of<DataProvider>(context, listen: false)
+              .getOrderDetails(orderDetailsModel);
 
           return response;
         } else if (response.statusCode == 401) {
@@ -840,11 +910,15 @@ class ApiServices {
         if (response.statusCode == 200) {
           Fluttertoast.showToast(msg: "Canceled Order");
           getHistoryConfirmOrder(context);
-          Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => BottomNavBar(),
-              ));
+          await LocalProductDetailsDataBase.instance.readAllNotes();
+          await ApiServices().getHistoryConfirmOrder(context);
+
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BottomNavBar(index: 4),
+            ),
+          );
           return response;
         } else if (response.statusCode == 401) {
           getRefreshToken();
@@ -881,7 +955,7 @@ class ApiServices {
         } else if (response.statusCode == 401) {
           getRefreshToken();
         } else {
-          Fluttertoast.showToast(msg: "${decoded['message']}");
+          // Fluttertoast.showToast(msg: "${decoded['message']}");
         }
       } else {
         Fluttertoast.showToast(msg: "No Internet!!!");
@@ -912,7 +986,7 @@ class ApiServices {
         } else if (response.statusCode == 401) {
           getRefreshToken();
         } else {
-          Fluttertoast.showToast(msg: "${decoded['message']}");
+          // Fluttertoast.showToast(msg: "${decoded['message']}");
         }
       } else {
         Fluttertoast.showToast(msg: "No Internet!!!");
@@ -943,7 +1017,7 @@ class ApiServices {
         } else if (response.statusCode == 401) {
           getRefreshToken();
         } else {
-          Fluttertoast.showToast(msg: "${decoded['message']}");
+          // Fluttertoast.showToast(msg: "${decoded['message']}");
         }
       } else {
         Fluttertoast.showToast(msg: "No Internet!!!");
@@ -987,7 +1061,7 @@ class ApiServices {
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(
-                builder: (context) => BottomNavBar(),
+                builder: (context) => BottomNavBar(index: 0),
               ),
             );
           } else {
@@ -1061,7 +1135,7 @@ class ApiServices {
           Provider.of<DataProvider>(context, listen: false)
               .getRegisterDetails(registerAuth);
           print(decoded);
-          Fluttertoast.showToast(msg: "Register Get successfully");
+          // Fluttertoast.showToast(msg: "Register Get successfully");
           return response;
         }
       } else {
@@ -1094,7 +1168,7 @@ class ApiServices {
         } else if (response.statusCode == 401) {
           getRefreshToken();
         } else {
-          Fluttertoast.showToast(msg: "${decoded['message']}");
+          // Fluttertoast.showToast(msg: "${decoded['message']}");
         }
       } else {
         Fluttertoast.showToast(msg: "No Internet!!!");
@@ -1128,7 +1202,7 @@ class ApiServices {
         } else if (response.statusCode == 401) {
           getRefreshToken();
         } else {
-          Fluttertoast.showToast(msg: "${decoded['message']}");
+          // Fluttertoast.showToast(msg: "${decoded['message']}");
         }
       } else {
         Fluttertoast.showToast(msg: "No Internet!!!");
@@ -1207,13 +1281,13 @@ class ApiServices {
           Provider.of<DataProvider>(context, listen: false)
               .getFeedBackUserProvider(getFeedBack);
 
-          Fluttertoast.showToast(msg: "Feedback get");
+          // Fluttertoast.showToast(msg: "Feedback get");
 
           return response;
         } else if (response.statusCode == 401) {
           getRefreshToken();
         } else {
-          Fluttertoast.showToast(msg: "${decoded['message']}");
+          // Fluttertoast.showToast(msg: "${decoded['message']}");
         }
       } else {
         Fluttertoast.showToast(msg: "No Internet!!!");

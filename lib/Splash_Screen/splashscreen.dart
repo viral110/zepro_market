@@ -15,22 +15,25 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   void initState() {
     super.initState();
+
     Timer(
       Duration(seconds: 7),
       () {
         print("Hello");
         if (storeKeyByGet.read('access_token') != null) {
           Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => BottomNavBar(),
-              ));
+            context,
+            MaterialPageRoute(
+              builder: (context) => BottomNavBar(index: 0),
+            ),
+          );
         } else {
           Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => LoginWithMobile(),
-              ));
+            context,
+            MaterialPageRoute(
+              builder: (context) => LoginWithMobile(),
+            ),
+          );
         }
 
         // Navigator.push(

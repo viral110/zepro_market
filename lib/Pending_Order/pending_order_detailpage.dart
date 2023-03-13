@@ -1,70 +1,60 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import 'package:jalaram/Connect_API/api.dart';
 import 'package:jalaram/Connect_API/data_base.dart';
 import 'package:jalaram/Home/bottomnavbar.dart';
+import 'package:jalaram/Model/get_current_order_details_model.dart';
 import 'package:jalaram/Model/get_current_order_his_model.dart';
 import 'package:jalaram/Pending_Order/pendingorder.dart';
+import 'package:jalaram/component/back_button.dart';
 
 class PendingOrderDetailPage extends StatefulWidget {
-  final int index;
-  final int id;
-  final GetCurrentOrderHistory gcoh;
-
-  String listOfId;
-  PendingOrderDetailPage(
-      {this.index, this.gcoh, this.id, this.listOfId, Key key})
-      : super(key: key);
+  final String id;
+  PendingOrderDetailPage({this.id, Key key}) : super(key: key);
 
   @override
   _PendingOrderDetailPageState createState() => _PendingOrderDetailPageState();
 }
 
 class _PendingOrderDetailPageState extends State<PendingOrderDetailPage> {
-  num storeTotal = 0;
-  int storeDiscount = 0;
-  int payableAmount = 0;
+  OrderDetailsModel odm;
 
-  final subPrice = [];
-  final mrpPrice = [];
+  var mrpPrice = [];
 
-  num storeMrp = 0;
+  num mrpsum = 0;
+  num totalMrpsum = 0;
 
-  final totalPrice = [];
-
-  num storeMrpValue = 0;
+  getOrderDetailsApi() async {
+    // await Future.delayed(Duration(milliseconds: 300), () async {
+    final response =
+        await ApiServices().getOrderDetails(context, widget.id.toString());
+    var decoded = jsonDecode(response.body);
+    if (response.statusCode == 200) {
+      odm = OrderDetailsModel.fromJson(decoded);
+      List.generate(odm.response.orders.length, (index) {
+        mrpPrice.add(odm.response.orders[index].mrp *
+            odm.response.orders[index].quantity);
+      });
+      for (num e in mrpPrice) {
+        mrpsum += e;
+      }
+      totalMrpsum = mrpsum.toInt();
+      print(decoded);
+      setState(() {
+        isLoading = true;
+      });
+    }
+    // });
+  }
 
   @override
   void initState() {
     // TODO: implement initState
+    getOrderDetailsApi();
     super.initState();
-    loopForStoreValue();
-  }
-
-  loopForStoreValue() {
-    List.generate(widget.gcoh.response[widget.listOfId].length - 1, (index) {
-      mrpPrice.add(widget
-              .gcoh.response[widget.listOfId][0][index]['product']['mrp']
-              .toInt() *
-          widget.gcoh.response[widget.listOfId][0][index]['count'].toInt());
-      print("Mrp Price : $mrpPrice");
-      totalPrice.add(widget
-              .gcoh.response[widget.listOfId][0][index]['product']['price']
-              .toInt() *
-          widget.gcoh.response[widget.listOfId][0][index]['count']);
-    });
-    for (num e in mrpPrice) {
-      storeMrp += e;
-    }
-    for (num e in totalPrice) {
-      storeTotal += e;
-    }
-    setState(() {
-      isLoading = true;
-    });
-    print(storeMrp);
   }
 
   bool isLoading = false;
@@ -75,7 +65,7 @@ class _PendingOrderDetailPageState extends State<PendingOrderDetailPage> {
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.only(left: 13, top: 14, right: 13),
+          padding: const EdgeInsets.only(left: 9, top: 14, right: 9),
           child: isLoading == false
               ? const Center(
                   child: CircularProgressIndicator(),
@@ -128,7 +118,7 @@ class _PendingOrderDetailPageState extends State<PendingOrderDetailPage> {
                                   height: 3,
                                 ),
                                 Text(
-                                  "${widget.listOfId}",
+                                  "${widget.id}",
                                   style: GoogleFonts.dmSans(
                                       fontSize: 22,
                                       color: Colors.black,
@@ -141,7 +131,7 @@ class _PendingOrderDetailPageState extends State<PendingOrderDetailPage> {
                           Container(
                             padding: EdgeInsets.all(5),
                             decoration: BoxDecoration(
-                              color: Color.fromRGBO(4, 75, 90, 1),
+                              color: Color.fromRGBO(255, 78, 91, 1),
                               borderRadius: BorderRadius.circular(5),
                             ),
                             child: Text(
@@ -166,7 +156,7 @@ class _PendingOrderDetailPageState extends State<PendingOrderDetailPage> {
                         ),
                       ),
                       Text(
-                        "${widget.gcoh.response[widget.listOfId][0][0]['mark_datetime']}",
+                        "${odm.response.markDatetime}",
                         style: GoogleFonts.dmSans(
                           fontSize: 18,
                           color: Colors.black,
@@ -211,26 +201,9 @@ class _PendingOrderDetailPageState extends State<PendingOrderDetailPage> {
                           ),
                           GestureDetector(
                             onTap: () async {
-                              bool isActive = false;
-                              setState(() {
-                                isActive = true;
-                              });
-                              await LocalProductDetailsDataBase.instance
-                                  .delete(widget.id);
-                              ApiServices()
-                                  .cancelConfirmOrder(context, widget.listOfId);
-
-                              setState(() {
-                                isActive = false;
-                              });
-
-
-                              // Navigator.pushReplacement(
-                              //   context,
-                              //   MaterialPageRoute(
-                              //     builder: (context) => BottomNavBar(),
-                              //   ),
-                              // );
+                              showDilogE(
+                                context: context,
+                              );
                             },
                             child: Text(
                               "Cancel Order",
@@ -247,302 +220,52 @@ class _PendingOrderDetailPageState extends State<PendingOrderDetailPage> {
                       SizedBox(
                         height: 25,
                       ),
-                      Flexible(
-                        flex: 0,
-                        child: SizedBox(
-                          width: MediaQuery.of(context).size.width,
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            physics: NeverScrollableScrollPhysics(),
-                            itemCount:
-                                widget.gcoh.response[widget.listOfId].length -
-                                    1,
-                            itemBuilder: (context, index) {
-                              return SizedBox(
-                                // width: MediaQuery.of(context).size.width,
-                                // height: MediaQuery.of(context).size.height,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.start,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Container(
-                                      height: 100,
-                                      width: 100,
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(10),
-                                        child: Image.network(
-                                          "${widget.gcoh.urls.image}/${widget.gcoh.response[widget.listOfId][0][index]['product']['banner']['media']}",
-                                          fit: BoxFit.fill,
-                                        ),
-                                      ),
-                                    ),
-                                    SizedBox(
-                                      width: 10,
-                                    ),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Row(
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.spaceBetween,
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.center,
-                                          children: [
-                                            Flexible(
-                                              flex: 0,
-                                              child: Text(
-                                                widget.gcoh.response[
-                                                        widget.listOfId][0]
-                                                    [index]['product']['title'],
-                                                style: GoogleFonts.dmSans(
-                                                    fontSize: 18.4),
-                                              ),
-                                            ),
-                                            SizedBox(
-                                              width: MediaQuery.of(context)
-                                                      .size
-                                                      .width /
-                                                  13,
-                                            ),
-                                            Column(
-                                              crossAxisAlignment:
-                                                  CrossAxisAlignment.start,
-                                              children: [
-                                                Row(
-                                                  mainAxisAlignment:
-                                                      MainAxisAlignment.start,
-                                                  crossAxisAlignment:
-                                                      CrossAxisAlignment.center,
-                                                  children: [
-                                                    Image.asset(
-                                                      "assets/rupee.png",
-                                                      height: 13.5,
-                                                      width: 13.5,
-                                                      color: Colors.black45,
-                                                    ),
-                                                    Flexible(
-                                                      flex: 0,
-                                                      child: Text(
-                                                        "${widget.gcoh.response[widget.listOfId][0][index]['product']['price'].toInt().toString()} x ",
-                                                        style:
-                                                            GoogleFonts.dmSans(
-                                                                fontSize: 12,
-                                                                color: Colors
-                                                                    .black45,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w700),
-                                                        softWrap: false,
-                                                      ),
-                                                    ),
-                                                    Text(
-                                                      widget
-                                                          .gcoh
-                                                          .response[widget
-                                                                  .listOfId][0]
-                                                              [index]['count']
-                                                          .toInt()
-                                                          .toString(),
-                                                      style: GoogleFonts.dmSans(
-                                                          fontSize: 12,
-                                                          color: Colors.black45,
-                                                          fontWeight:
-                                                              FontWeight.w700),
-                                                      softWrap: false,
-                                                    ),
-                                                  ],
-                                                ),
-                                                SizedBox(
-                                                  height: 8,
-                                                ),
-                                                Row(
-                                                  children: [
-                                                    Image.asset(
-                                                      "assets/rupee.png",
-                                                      height: 13.5,
-                                                      width: 13.5,
-                                                      color: Colors.black,
-                                                    ),
-                                                    SizedBox(
-                                                      width: 65,
-                                                      child: Text(
-                                                        "${widget.gcoh.response[widget.listOfId][0][index]['product']['price'].toInt() * widget.gcoh.response[widget.listOfId][0][index]['count']}",
-                                                        style:
-                                                            GoogleFonts.dmSans(
-                                                                fontSize: 16,
-                                                                color: Colors
-                                                                    .black,
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .w500),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                        SizedBox(
-                                          height: 10,
-                                        ),
-                                        Text(
-                                          "${widget.gcoh.response[widget.listOfId][0][index]['count'].toString()} Qty",
-                                          style: GoogleFonts.dmSans(
-                                              fontSize: 16.4,
-                                              color: Colors.black45,
-                                              fontWeight: FontWeight.bold),
-                                        ),
-                                        Flexible(
-                                          flex: 0,
-                                          child: Row(
-                                            children: [
-                                              Flexible(
-                                                flex: 0,
-                                                child: Row(
-                                                  children: [
-                                                    Image.asset(
-                                                      "assets/rupee.png",
-                                                      height: 13.5,
-                                                      width: 13.5,
-                                                      color: Colors.black45,
-                                                    ),
-                                                    Text(
-                                                      widget
-                                                          .gcoh
-                                                          .response[widget
-                                                                  .listOfId][0]
-                                                              [index]['product']
-                                                              ['price']
-                                                          .toInt()
-                                                          .toString(),
-                                                      style: GoogleFonts.dmSans(
-                                                          fontSize: 13,
-                                                          color: Colors.black45,
-                                                          fontWeight:
-                                                              FontWeight.w700),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: 5,
-                                              ),
-                                              Flexible(
-                                                flex: 0,
-                                                child: Row(
-                                                  children: [
-                                                    Image.asset(
-                                                      "assets/rupee.png",
-                                                      height: 13.5,
-                                                      width: 13.5,
-                                                      color: Colors.black45,
-                                                    ),
-                                                    Text(
-                                                      "${widget.gcoh.response[widget.listOfId][0][index]['product']['mrp'].toInt() * widget.gcoh.response[widget.listOfId][0][index]['count'].toInt()}"
-                                                          .toString(),
-                                                      style: GoogleFonts.dmSans(
-                                                          fontSize: 13,
-                                                          color: Colors.black45,
-                                                          fontWeight:
-                                                              FontWeight.w700),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                              SizedBox(
-                                                width: 5,
-                                              ),
-                                              Flexible(
-                                                flex: 0,
-                                                child: Text(
-                                                  "${widget.gcoh.response[widget.listOfId][0][index]['product']['discount_percentage'].toInt().toString()}% OFF",
-                                                  style: GoogleFonts.dmSans(
-                                                      color: Color.fromRGBO(
-                                                          4, 75, 90, 1),
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 13),
-                                                ),
-                                              ),
-                                            ],
+                      SizedBox(
+                        width: MediaQuery.of(context).size.width,
+                        child: ListView.builder(
+                          shrinkWrap: true,
+                          physics: NeverScrollableScrollPhysics(),
+                          itemCount: odm.response.orders.length,
+                          itemBuilder: (context, index) {
+                            return Column(
+                              children: [
+                                SizedBox(
+                                  width: MediaQuery.of(context).size.width,
+                                  // height: MediaQuery.of(context).size.height,
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Container(
+                                        height: 100,
+                                        width: 100,
+                                        child: ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                          child: Image.network(
+                                            "${odm.urls.image}/${odm.response.orders[index].banner.media}",
+                                            fit: BoxFit.contain,
                                           ),
                                         ),
-                                        SizedBox(
-                                          height: 20,
-                                        ),
-                                      ],
-                                    ),
-                                    // Flexible(
-                                    //   flex: 1,
-                                    //   child: Padding(
-                                    //     padding: const EdgeInsets.only(left: 0),
-                                    //     child: Column(
-                                    //       children: [
-                                    //         Row(
-                                    //           mainAxisAlignment:
-                                    //               MainAxisAlignment.start,
-                                    //           children: [
-                                    //             Image.asset(
-                                    //               "assets/rupee.png",
-                                    //               height: 13.5,
-                                    //               width: 13.5,
-                                    //               color: Colors.black45,
-                                    //             ),
-                                    //             Text(
-                                    //               "${widget.gcoh.response[widget.listOfId][index].product.price.toInt().toString()} x ",
-                                    //               style: GoogleFonts.dmSans(
-                                    //                   fontSize: 12,
-                                    //                   color: Colors.black45,
-                                    //                   fontWeight:
-                                    //                       FontWeight.w700),
-                                    //             ),
-                                    //             Text(
-                                    //               widget
-                                    //                   .gcoh
-                                    //                   .response[widget.listOfId]
-                                    //                       [index]
-                                    //                   .count
-                                    //                   .toString(),
-                                    //               style: GoogleFonts.dmSans(
-                                    //                   fontSize: 12,
-                                    //                   color: Colors.black45,
-                                    //                   fontWeight:
-                                    //                       FontWeight.w700),
-                                    //             ),
-                                    //           ],
-                                    //         ),
-                                    //         SizedBox(
-                                    //           height: 8,
-                                    //         ),
-                                    //         Row(
-                                    //           children: [
-                                    //             Image.asset(
-                                    //               "assets/rupee.png",
-                                    //               height: 13.5,
-                                    //               width: 13.5,
-                                    //               color: Colors.black,
-                                    //             ),
-                                    //             Text(
-                                    //               "${widget.gcoh.response[widget.listOfId][index].product.price.toInt() * widget.gcoh.response[widget.listOfId][widget.index].count}",
-                                    //               style: GoogleFonts.dmSans(
-                                    //                   fontSize: 16,
-                                    //                   color: Colors.black,
-                                    //                   fontWeight:
-                                    //                       FontWeight.w500),
-                                    //             ),
-                                    //           ],
-                                    //         ),
-                                    //       ],
-                                    //     ),
-                                    //   ),
-                                    // ),
-                                  ],
+                                      ),
+                                      SizedBox(
+                                        width: 10,
+                                      ),
+                                      Expanded(
+                                        child: allWidget(index),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              );
-                            },
-                          ),
+                                Divider(
+                                  color: Colors.black54,
+                                  thickness: 0.6,
+                                ),
+                              ],
+                            );
+                          },
                         ),
                       ),
                       SizedBox(
@@ -567,7 +290,7 @@ class _PendingOrderDetailPageState extends State<PendingOrderDetailPage> {
                                 color: Colors.black,
                               ),
                               Text(
-                                storeMrp.toInt().toString(),
+                                totalMrpsum.toInt().toString(),
                                 style: GoogleFonts.dmSans(
                                     fontSize: 18, fontWeight: FontWeight.w600),
                               ),
@@ -605,7 +328,7 @@ class _PendingOrderDetailPageState extends State<PendingOrderDetailPage> {
                                 color: Color.fromRGBO(4, 75, 90, 1),
                               ),
                               Text(
-                                "${storeMrp.toInt() - storeTotal.toInt()}",
+                                "${totalMrpsum.toInt() - odm.response.totalPrice.toInt()}",
                                 style: GoogleFonts.dmSans(
                                     fontSize: 18,
                                     color: Color.fromRGBO(4, 75, 90, 1),
@@ -637,7 +360,7 @@ class _PendingOrderDetailPageState extends State<PendingOrderDetailPage> {
                                 color: Colors.black,
                               ),
                               Text(
-                                "${storeTotal.toInt()}",
+                                "${odm.response.totalPrice.ceilToDouble().toInt()}",
                                 style: GoogleFonts.dmSans(
                                     fontSize: 18, fontWeight: FontWeight.w500),
                               ),
@@ -696,7 +419,7 @@ class _PendingOrderDetailPageState extends State<PendingOrderDetailPage> {
                                 width: 14,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  color: Color.fromRGBO(4, 75, 90, 1),
+                                  color: Color.fromRGBO(255, 78, 91, 1),
                                 ),
                               ),
                             ],
@@ -731,6 +454,237 @@ class _PendingOrderDetailPageState extends State<PendingOrderDetailPage> {
                     ],
                   ),
                 ),
+        ),
+      ),
+    );
+  }
+
+  Column allWidget(int index) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: MediaQuery.of(context).size.width/1,
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                width: 150,
+                child: Text(
+                  odm.response.orders[index].productName,
+                  style: GoogleFonts.dmSans(fontSize: 14),
+                ),
+              ),
+              Spacer(),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      Image.asset(
+                        "assets/rupee.png",
+                        height: 13.5,
+                        width: 13.5,
+                        color: Colors.black45,
+                      ),
+                      Text(
+                        (odm.response.orders[index].price % 1 == 0)?"${odm.response.orders[index].price.toInt()} x ":"${odm.response.orders[index].price} x ",
+                        style: GoogleFonts.dmSans(
+                            fontSize: 12,
+                            color: Colors.black45,
+                            fontWeight: FontWeight.w700),
+                        softWrap: false,
+                      ),
+                      Text(
+                        odm.response.orders[index].quantity
+                            .toInt()
+                            .toString(),
+                        style: GoogleFonts.dmSans(
+                            fontSize: 12,
+                            color: Colors.black45,
+                            fontWeight: FontWeight.w700),
+                        softWrap: false,
+                      ),
+                    ],
+                  ),
+                  SizedBox(
+                    height: 8,
+                  ),
+                  Row(
+                    children: [
+                      Image.asset(
+                        "assets/rupee.png",
+                        height: 13.5,
+                        width: 13.5,
+                        color: Colors.black,
+                      ),
+                      (odm.response.orders[index].price % 1) == 0
+                      ? SizedBox(
+                        width: 65,
+                        child: Text(
+                          "${odm.response.orders[index].price.toInt() * odm.response.orders[index].quantity.toInt()}",
+                          style: GoogleFonts.dmSans(
+                              fontSize: 16,
+                              color: Colors.black,
+                              fontWeight: FontWeight.w500),
+                        ),
+                      ):SizedBox(
+                        width: 65,
+                        child: Text(
+                          "${odm.response.orders[index].price * odm.response.orders[index].quantity.toInt()}",
+                          style: GoogleFonts.dmSans(
+                              fontSize: 16,
+                              color: Colors.black,
+                              fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 10,
+        ),
+        Text(
+          "${odm.response.orders[index].quantity} Qty",
+          style: GoogleFonts.dmSans(
+              fontSize: 16.4,
+              color: Colors.black45,
+              fontWeight: FontWeight.bold),
+        ),
+        Flexible(
+          flex: 0,
+          child: Row(
+            children: [
+              Flexible(
+                flex: 0,
+                child: Row(
+                  children: [
+                    Image.asset(
+                      "assets/rupee.png",
+                      height: 13.5,
+                      width: 13.5,
+                      color: Colors.black45,
+                    ),
+                    Text(
+                      (odm.response.orders[index].price % 1 == 0)?odm.response.orders[index].price.toInt().toString():odm.response.orders[index].price.toString(),
+                      style: GoogleFonts.dmSans(
+                          fontSize: 13,
+                          color: Colors.black45,
+                          fontWeight: FontWeight.w700),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                width: 5,
+              ),
+              Flexible(
+                flex: 0,
+                child: Row(
+                  children: [
+                    Image.asset(
+                      "assets/rupee.png",
+                      height: 13.5,
+                      width: 13.5,
+                      color: Colors.black45,
+                    ),
+                    Text(
+                      "${odm.response.orders[index].mrp.toInt() * odm.response.orders[index].quantity}"
+                          .toString(),
+                      style: GoogleFonts.dmSans(
+                          fontSize: 13,
+                          color: Colors.black45,
+                          fontWeight: FontWeight.w700,
+                          decoration: TextDecoration.lineThrough),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(
+                width: 5,
+              ),
+              Flexible(
+                flex: 0,
+                child: Text(
+                  "${odm.response.orders[index].discount.toInt().toString()}% OFF",
+                  style: GoogleFonts.dmSans(
+                      color: Color.fromRGBO(4, 75, 90, 1),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 20,
+        ),
+      ],
+    );
+  }
+
+  showDilogE({BuildContext context, int index}) {
+    return showDialog(
+      context: context,
+      builder: (context) => Container(
+        width: MediaQuery.of(context).size.width / 1.2,
+        child: AlertDialog(
+          insetPadding: EdgeInsets.all(10),
+          contentPadding: EdgeInsets.zero,
+          title: Text(
+            "Are you sure you want cancel this order?",
+            style: GoogleFonts.aBeeZee(fontSize: 14),
+          ),
+          actions: [
+            Container(
+              child: ElevatedButton(
+                style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all(
+                  Colors.white,
+                )),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: Text(
+                  "No",
+                  style:
+                      GoogleFonts.dmSans(color: Color.fromRGBO(255, 78, 91, 1),),
+                ),
+              ),
+              decoration: BoxDecoration(
+                border:
+                    Border.all(color: Color.fromRGBO(255, 78, 91, 1), width: 1.5),
+                borderRadius: BorderRadius.circular(5),
+              ),
+              height: 40,
+            ),
+            Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: ElevatedButton(
+                onPressed: () async {
+                  openAndCloseLoadingDialog(context: context);
+                  await ApiServices().cancelConfirmOrder(context, widget.id);
+                },
+                child: Text(
+                  "Yes",
+                  style: GoogleFonts.dmSans(color: Colors.white),
+                ),
+                style: ButtonStyle(
+                    backgroundColor: MaterialStateProperty.all(
+                      Color.fromRGBO(255, 78, 91, 1),
+                )),
+              ),
+              height: 40,
+            ),
+          ],
         ),
       ),
     );

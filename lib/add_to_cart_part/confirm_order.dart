@@ -62,7 +62,7 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
       body: SafeArea(
         child: isLoading != true
             ? SingleChildScrollView(
-              child: Padding(
+                child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -121,13 +121,15 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                         "Please Pickup your order within 24 hours.It will be automatically canceled after 24 hours of you order time",
                         textAlign: TextAlign.center,
                         style: GoogleFonts.dmSans(
-                            fontSize: 16, color: Colors.red, letterSpacing: 0.6),
+                            fontSize: 16,
+                            color: Colors.red,
+                            letterSpacing: 0.6),
                       ),
                       SizedBox(
                         height: 30,
                       ),
                       Text(
-                        "We have received your order. One of our sales executives will contact you with further information regarding payment & shipping",
+                        "We have received your order. One of our sales executives will contact you with further information regarding Payment Mode : Cash, GPay, Phone Pe,Paytm and also Bank Transfer & shipping",
                         textAlign: TextAlign.center,
                         style: GoogleFonts.dmSans(fontSize: 16),
                       ),
@@ -135,12 +137,15 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                         height: 15,
                       ),
                       GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => BottomNavBar(),
-                              ));
+                        onTap: () async {
+                          await ApiServices().fetchAddToCartItem(context);
+                          await ApiServices().getHistoryConfirmOrder(context);
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PendingOrder(),
+                            ),
+                          );
                         },
                         child: Container(
                           alignment: Alignment.center,
@@ -148,10 +153,10 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                           padding: EdgeInsets.all(10),
                           decoration: BoxDecoration(
                             borderRadius: BorderRadius.circular(2),
-                            color: Color.fromRGBO(4, 75, 90, 1),
+                            color: Color.fromRGBO(255, 78, 91, 1),
                           ),
                           child: Text(
-                            "Back To Home",
+                            "Back To MyOrders",
                             style: GoogleFonts.dmSans(
                                 color: Colors.white, fontSize: 18),
                           ),
@@ -182,7 +187,7 @@ class _ConfirmOrderPageState extends State<ConfirmOrderPage> {
                     ],
                   ),
                 ),
-            )
+              )
             : Center(
                 child: CircularProgressIndicator(),
               ),
